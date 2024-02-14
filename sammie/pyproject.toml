@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "sammie"
+version = "0.1.0"
+description = ""
+authors = ["Sushant Sharma-Chaudhary <sushant.sharma-chaudhary@ligo.org>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+gwpy = "^3.0.8"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
