@@ -2,12 +2,15 @@ from gwpy.timeseries import TimeSeries
 from etc import config
 import numpy as np
 from scipy.signal import coherence
+from scipy.signal import argrelextrema
+from scipy import optimize
 import matplotlib.pyplot as plt
+import nds2
 
 
-
-def fetch_timeseries_data(channel, gps_start, gps_end):
-    data = TimeSeries.fetch(channel, gps_start, gps_end, allow_tape=True)
+def fetch_timeseries_data(channel, gps_start, gps_end, conn):
+    
+    data = TimeSeries.fetch(channel, gps_start, gps_end,connection=conn, allow_tape=True)
     return data
 
 
@@ -73,17 +76,71 @@ def frequency_minima_calculator(data_A, data_B):
 
     return frequency
 
+def frequency_minima_withscipy(data_A, data_B):
 
+    f,coh = coherence_calculator(data_A, data_B)
+
+    # find the point where there is max coherence
+    rounded_coh = np.round(coh, 2)
+    first_one_coh = np.min(np.where(rounded_coh == 1.00))
+
+    # from that frequency position to 0 make freq-bins of given width and check for 
+    # coherence difference in each bin
+    check_array = np.arange(first_one_coh, 0, -1)
+
+    for i in range(len(check_array)):
+        
+        try:
+            sub_array = rounded_coh[check_array[i+config.bin_width]:check_array[i]]     
+            min = argrelextrema(sub_array, np.less)
+            min_pos_ar = min[0]
+            if len(min_pos_ar) != 0:
+                print(sub_array[min[0]])
+                print(np.max(np.where(rounded_coh[0:first_one_coh] == sub_array[min_pos_ar[0]])))
+                frequency = f[np.max(np.where(rounded_coh[0:first_one_coh] == sub_array[min_pos_ar[0]]))]
+                
+                if sub_array[min[0][0]] < 0.4:
+                    return frequency
+                    break
+        except:
+            print("reached the end. Substituting default check")
+            min_coh = np.min(rounded_coh[0:first_one_coh])
+            last_one_coh = np.max(np.where(rounded_coh[0:first_one_coh] == min_coh))
+            frequency = f[last_one_coh]
+
+    return frequency
+
+
+conn = nds2.connection('nds.ligo-la.caltech.edu',31200)
 for start_times in config.gps_sample_list:
     # Checking coherence between ETMX and ITMX ground sensors
     print(start_times)
 
     ITMX_data = fetch_timeseries_data('L1:ISI-GND_STS_ITMX_X_DQ',
                                     start_times, start_times + 
-                                    (config.averages*config.coherence_overlap +1)*config.coherence_fftlen )
+                                    (config.averages*config.coherence_overlap +1)*config.coherence_fftlen, conn )
     ITMY_data = fetch_timeseries_data('L1:ISI-GND_STS_ITMY_X_DQ',
                                     start_times, start_times + 
-                                    (config.averages*config.coherence_overlap +1)*config.coherence_fftlen )
+                                    (config.averages*config.coherence_overlap +1)*config.coherence_fftlen, conn )
     print("done")
-    cutoff_freq = frequency_minima_calculator(ITMX_data, ITMY_data)
+    cutoff_freq = frequency_minima_withscipy(ITMX_data, ITMY_data)
     plot_asd_coherence(ITMX_data, ITMY_data, start_times, cutoff_freq)
+
+
+'''
+        try:
+            sub_array = rounded_coh[check_array[i+1]:check_array[i]]
+            min = argrelextrema(sub_array, np.less)
+            print(f'min {min}')
+            if len(min) != 0:
+                print(sub_array[min[0]])
+                print(np.max(np.where(rounded_coh[0:first_one_coh] == min_coh)))
+                frequency = f[np.max(np.where(rounded_coh[0:first_one_coh] == min_coh))]
+                print(frequency)
+
+        except:
+            print("reached the end. Substituting default check")
+            min_coh = np.min(rounded_coh[0:first_one_coh])
+            last_one_coh = np.max(np.where(rounded_coh[0:first_one_coh] == min_coh))
+            frequency = f[last_one_coh]
+'''

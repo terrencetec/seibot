@@ -42,5 +42,5 @@ gps_sample_list = [
 ]
 
 # frequency binnning for finding cutoff
-bin_width = 10
+bin_width = 5
 coherence_diff = 0.5
