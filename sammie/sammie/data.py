@@ -1,4 +1,5 @@
 from gwpy.timeseries import TimeSeries
+from gwpy.frequencyseries import FrequencySeries
 from etc import config
 import numpy as np
 from scipy.signal import coherence
@@ -44,15 +45,21 @@ def plot_asd_coherence(data_A, data_B, start_times, cutoff_freq=None):
     plt.savefig(f"../temp_analysis/asd_coh_cutoff_{str(start_times)}.png", dpi=300)
 
 
+def plot_padded_asd(asd_a, asd_b, cutoff_freq):
+    fig, ax = plt.subplots(figsize=(15,6))
+    ax.plot(asd_a.frequencies, asd_a.value, label="ITMX")
+    ax.plot(asd_b.frequencies, asd_b.value, label="ITMY")
+    ax.set_xlim(0.001,100)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_title("ASD")
+    ax.legend()
+    ax.axvline(cutoff_freq, c='r')
+    plt.savefig(f"../temp_analysis/padded_asd_{str(int(asd_a.epoch.value))}.png", dpi=300)
 
-
-def frequency_minima_scipy_groundmotion(data_A, data_B):
+def frequency_minima_scipy_groundmotion(data_A, data_B, asd_dis_a, asd_dis_b):
 
     f,coh = coherence_calculator(data_A, data_B)
-    asd_a = data_A.asd(fftlength=512,overlap=0.5)
-    asd_b = data_B.asd(fftlength=512,overlap=0.5)
-    asd_a_dis = asd_a.value/(2*np.pi*asd_a.frequencies)
-    asd_b_dis = asd_b.value/(2*np.pi*asd_b.frequencies)
     # find the point where there is max coherence
     rounded_coh = np.round(coh, 2)
     first_one_coh = np.min(np.where(rounded_coh == 1.00))
@@ -60,11 +67,26 @@ def frequency_minima_scipy_groundmotion(data_A, data_B):
     # from that frequency position to 0 make freq-bins of given width and check for 
     # coherence difference in each bin
     check_array = np.arange(first_one_coh, 0, -config.bin_width)
-    min_asd = np.min(asd_a_dis[0:first_one_coh])
-    last_one_coh = np.max(np.where(asd_a_dis[0:first_one_coh] == min_asd))
-    frequency = asd_a.frequencies[last_one_coh]
+    min_asd = np.min(asd_dis_a.value[0:first_one_coh])
+    last_one_coh = np.max(np.where(asd_dis_a.value[0:first_one_coh] == min_asd))
+    frequency = asd_dis_a.frequencies[last_one_coh]
     return frequency.value
 
+
+def pad_asd(asd_a, asd_b, cutoff_freq):
+    loc_cutoff = np.where((asd_a.frequencies.value == cutoff_freq))[0][0]
+    pad_value_a = asd_a.value[loc_cutoff]
+    pad_value_b = asd_b.value[loc_cutoff]
+    data_a = asd_a.value
+    data_a[0:loc_cutoff] = pad_value_a 
+    data_b = asd_b.value
+    data_b[0:loc_cutoff] = pad_value_b 
+    asd_a.append(data_a, resize=False)
+    asd_b.append(data_b, resize=False)
+    asd_a.f0 = 0 
+    asd_b.f0 = 0
+
+    return asd_a, asd_b
 
 conn = nds2.connection('nds.ligo-la.caltech.edu',31200)
 for start_times in config.gps_sample_list:
@@ -78,5 +100,25 @@ for start_times in config.gps_sample_list:
                                     start_times, start_times + 
                                     (config.averages*config.coherence_overlap +1)*config.coherence_fftlen, conn )
     print("done")
-    cutoff_freq = frequency_minima_scipy_groundmotion(ITMX_data, ITMY_data)
-    plot_asd_coherence(ITMX_data, ITMY_data, start_times, cutoff_freq)
+
+    asd_a = ITMX_data.asd(fftlength=512,overlap=0.5)
+    asd_b = ITMY_data.asd(fftlength=512,overlap=0.5)
+
+    asd_dis_a = FrequencySeries(data=asd_a.value/(2*np.pi*asd_a.frequencies), 
+                                f0=asd_a.f0, 
+                                df=asd_a.df, 
+                                name=asd_a.name, 
+                                epoch=asd_a.epoch, 
+                                channel=asd_a.channel)
+    
+    asd_dis_b = FrequencySeries(data=asd_b.value/(2*np.pi*asd_b.frequencies), 
+                                f0=asd_b.f0, 
+                                df=asd_b.df, 
+                                name=asd_b.name, 
+                                epoch=asd_b.epoch, 
+                                channel=asd_b.channel)
+    
+    cutoff_freq= frequency_minima_scipy_groundmotion(ITMX_data, ITMY_data, asd_dis_a, asd_dis_b)
+    padded_asd_a, padded_asd_b = pad_asd(asd_dis_a, asd_dis_b, cutoff_freq)
+    #plot_asd_coherence(ITMX_data, ITMY_data, start_times, cutoff_freq)
+    plot_padded_asd(padded_asd_a, padded_asd_b,cutoff_freq)
