@@ -1,0 +1,115 @@
+elseif strncmpi(sensor_name,'T240meas',5)
+    %eyeballed from the 090310 data sets
+    if verbose
+        disp('The 0.01 to 0.03 Hz data from T240meas is just 2*T240spec, and not really measured')
+        disp('    (the 0.03 Hz point is measured)')
+    end
+    freq_data   = [1E-4 .01, .03,    .1,    0.3,    1,     3,     10   100];
+    noise_data  = [0.01 2*1.4e-7, 2e-8, 1.5e-9, 2e-10, 4e-11, 5e-12, 1.5e-12 1e-13];
+     
+    lognoise    = interp1(log10(freq_data),log10(noise_data),log10(freq));
+    noise_ASD   = 10.^lognoise;
+
+    % original response, changed to resp per manual on Oct 18, 2011, BTL
+    %response_FR = 1196 .* 2*pi*freq;  % V/m 
+    %disp('warning, the T240 response is only valid between about 20 mHz and 40 Hz')
+    % 
+    % the new TF comes from pg 10 of the Trillium 240 OBS user guide
+    % originally specified in RAD/SEC, with minus signs. 
+    %hence the lack of the usual -2*pi*
+    spec_k = 2.316e9; % from the manual
+    spec_gain = 1196.5;
+    
+    % this is in units of V/(m/s);
+    response_zpk_temp = spec_gain * zpk([0 0 -108 -161], ...
+        [-0.01815 + 0.01799i, -0.01815 - 0.01799i, -173, ...
+        -196 + 231i, -196 - 231i, -732 + 1415i,  -732 - 1415i], spec_k) ;
+    
+    % and this is in V/m
+    response_ZPK = tf('s') * response_zpk_temp;
+    response_FR = squeeze(freqresp(response_ZPK, 2*pi*freq));
+
+
+elseif strncmpi(sensor_name,'GS13meas',5)
+    % taken directly from GS13_noise_measured_March2007 
+    % the noise floor of the GS13 measured on the Tech Demo
+    %  this is based on the data from the Tech Demo 3/15/2007
+    %  using 2 witnesses with good ADCs, the new readouts, and a Q of ~ 5
+    %  it is a little bigger than the expected noise based on the
+    %  spec sheet for the LT1012 readout.
+    %
+    %  BTL, Oct 5, 2008
+    %
+    % see log entry http://ligo.phys.lsu.edu:8080/SEI/1288
+
+    % data from graphclicks
+    
+    % at low freq, it looks to scale as x10 for every x2 in freq
+    % is a power law of -3.32 (expect -3.5 from 1/f and sens scaling)
+    % we will use the 3.5 to be conservative
+    % 2e-8 * 10^3.5 = 6.3e-5
+    % also assume a 1/f falloff at high freq
+    full_data = [...
+        1E-4   670;...
+        0.01   2e-8 * 10^3.5;...
+        0.101	2.138e-8;...
+        0.201	1.958e-9;...
+        0.400	1.892e-10;...
+        0.792	1.732e-11;...
+        0.994	7.262e-12;...
+        1.258	3.887e-12;...
+        1.655	2.449e-12;...
+        2.588	1.462e-12;...
+        3.954	9.725e-13;...
+        8.202	4.423e-13;...
+        10.710	3.280e-13;...
+        24.796	1.137e-13;...
+        46.087	5.610e-14;...
+        91.208	2.053e-14
+        1e3      2e-15;];
+    
+    data_freq   = full_data(:,1);
+    data_noise  = full_data(:,2);
+    lognoise   = interp1(log10(data_freq),log10(data_noise),log10(freq));
+    noise_ASD  = 10.^lognoise;
+
+    response_ZPK = tf(0);
+    response_FR = NaN * ones(size(freq));
+    disp([' warning, the freq resp for the ' sensor_name ' is not yet defined']);
+
+
+elseif strncmpi(sensor_name,'Fine_Hugh',9)
+    % aPLUS order for Fine CPS (ADE_p25mm) that are better than the aLIGO
+    % order; see SEI aLOG 1580
+   
+      A = log( 5.5e-10/2e-10)/log(0.03/0.1);
+      B = log(5.5e-10) - A*log(0.03);
+      N = exp(A*log(0.001) +B);
+      freq_data   =   [0.001        .03,    0.1,         1,        2.5,      100 1000];
+    noise_data  = [     N     5.5e-10,     2e-10       0.5e-10,     4e-11,     3e-11 3e-11;];
+%     
+      lognoise    = interp1(log10(freq_data),log10(noise_data),log10(freq));
+      noise_ASD   = 10.^lognoise;
+%     response_FR = 10/0.25e-3 * ones(size(freq)); % 10V/ 0.25 mm
+%     response_ZPK = tf(10/0.25e-3); 
+      response_FR =  ones(size(freq)); % 10V/ 0.25 mm
+     response_ZPK = tf(1); 
+
+
+elseif strncmpi(sensor_name,'ADE_p25mm',9)
+	    freq_data   =   [.001,   .002,    .01,      .1,    .7,    100];
+	    noise_data  = [1.5e-08, 2.7e-09, 7.5e-10, 1.5e-10, 6e-11, 6e-11];
+        lognoise    = interp1(log10(freq_data),log10(noise_data),log10(freq));
+        noise_ASD   = 10.^lognoise;
+         response_FR =  ones(size(freq)); % 10V/ 0.25 mm
+    response_ZPK = tf(1); 
+
+if strncmpi(sensor_name,'ADE_1mm',7)
+    % see Andy Stein SEI log enty 1311, nov 4 overnight plot
+    freq_data   = [.001,  .002,  .01,    .1,    .7,    100];
+    noise_data  = [ 5e-8, 9e-9, 2.5e-9, 5e-10, 2e-10, 2e-10];
+    
+    lognoise     =  interp1(log10(freq_data),log10(noise_data),log10(freq));
+    noise_ASD    = 2*10.^lognoise;
+    response_FR  = 10/1e-3 * ones(size(freq)); % 10 V per mm
+    response_ZPK = tf(10/1e-3);

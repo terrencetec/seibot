@@ -316,6 +316,27 @@ test = ["Pillow", "contourpy[test-no-images]", "matplotlib"]
 test-no-images = ["pytest", "pytest-cov", "pytest-xdist", "wurlitzer"]
 
 [[package]]
+name = "control"
+version = "0.9.4"
+description = "Python Control Systems Library"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "control-0.9.4-py3-none-any.whl", hash = "sha256:ab68980abd8d35ae5015ffa090865cbbd926deea7e66d0b9a41cfd12577e63ff"},
+    {file = "control-0.9.4.tar.gz", hash = "sha256:0fa57d2216b7ac4e9339c09eab6827660318a641779335864feee940bd19c9ce"},
+]
+
+[package.dependencies]
+matplotlib = "*"
+numpy = "*"
+scipy = ">=1.3"
+
+[package.extras]
+cvxopt = ["cvxopt (>=1.2.0)"]
+slycot = ["slycot (>=0.4.0)"]
+test = ["pytest", "pytest-timeout"]
+
+[[package]]
 name = "cryptography"
 version = "42.0.2"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
@@ -764,6 +785,23 @@ files = [
     {file = "kiwisolver-1.4.5-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:11d011a7574eb3b82bcc9c1a1d35c1d7075677fdd15de527d91b46bd35e935ee"},
     {file = "kiwisolver-1.4.5.tar.gz", hash = "sha256:e57e563a57fb22a142da34f38acc2fc1a5c864bc29ca1517a88abc963e60d6ec"},
 ]
+
+[[package]]
+name = "kontrol"
+version = "1.0.0b0"
+description = "KAGRA control python package"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "kontrol-1.0.0b0-py3-none-any.whl", hash = "sha256:2e9d37c9687434060db0df6c481884f2bf399aa15388de95aa51b0f585d5c8a0"},
+    {file = "kontrol-1.0.0b0.tar.gz", hash = "sha256:fe3319d29986bf752685070b6d1206671ff689e8d727dbeea01b2778fe6a2e2d"},
+]
+
+[package.dependencies]
+control = ">=0.9"
+matplotlib = "*"
+numpy = "*"
+scipy = "*"
 
 [[package]]
 name = "ligo-segments"
@@ -1430,4 +1468,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "50ef43aa3ac52e0109bcfc62ffd79c79df545274295758f65284860da8b094a5"
+content-hash = "e14ee4d2c4aa09a3792402ad4464df00381b4e40a3830881a2d2cdc4cceefdb9"
