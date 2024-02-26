@@ -24,6 +24,7 @@ def ham8_plant_x():
     f_ = np.arange(0.0,200.0, 0.001953125)
     q = 160
     plant_ham8_x = noise_model(f_, a=0.1, b=-2.2,q=q, na=10, nb=5)
+    plt.clf()
     plt.loglog(f, abs(z_tf))
     plt.loglog(f_,plant_ham8_x , label="model")
     plt.title("HAM8 Plant X Dof")
@@ -48,6 +49,7 @@ def ham8_plant_y():
     f_ = np.arange(0.0,200.0, 0.001953125)
     q = 160
     plant_ham8_y = noise_model(f_, a=0.1, b=-2.2,q=q, na=10, nb=5)
+    plt.clf()
     plt.loglog(f, abs(z_tf))
     plt.loglog(f_,plant_ham8_y , label="model")
     plt.title("HAM8 Plant Y Dof")
@@ -72,6 +74,7 @@ def ham8_plant_z():
     f_ = np.arange(0.0,200.0, 0.001953125)
     q = 110
     plant_ham8_z = noise_model(f_, a=0.3, b=-2.2,q=q, na=11, nb=3)
+    plt.clf()
     plt.loglog(f, abs(z_tf))
     plt.loglog(f_,plant_ham8_z , label="model")
     plt.title("HAM8 Plant Z Dof")
