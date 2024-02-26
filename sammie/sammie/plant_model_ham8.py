@@ -2,12 +2,6 @@ import control
 import numpy as np
 import matplotlib.pyplot as plt
 
-def noise_model(f, a, b,q,  na, nb):
-    """Noise model"""
-
-    noise =q*1/ (((na/f**a)**2 + (nb/f**b)**2)**.5)
-    return noise
-
 def ham8_plant_x():
     data = np.loadtxt("l1_ham8_plant_xyz.txt")
     f = data[:, 0]
@@ -19,19 +13,21 @@ def ham8_plant_x():
     wn = 1*2*np.pi
     q = 1/np.sqrt(2)
     gs13_inv = (s**2+wn/q*s+wn**2) / s**3
-
     z_tf *= gs13_inv(1j*2*np.pi*f)
     f_ = np.arange(0.0,200.0, 0.001953125)
-    q = 160
-    plant_ham8_x = noise_model(f_, a=0.1, b=-2.2,q=q, na=10, nb=5)
+    s = control.tf("s")
+    w1 = 1.25*2*np.pi
+    q1 = 1/0.9
+    model = w1**2 / (s**2+w1/q1*s+w1**2) * 12.5
     plt.clf()
     plt.loglog(f, abs(z_tf))
-    plt.loglog(f_,plant_ham8_x , label="model")
+
+    plt.loglog(f_, abs(model(1j*2*np.pi*f_)), label="model")
     plt.title("HAM8 Plant X Dof")
     plt.grid(which="both")
     plt.legend()
     plt.savefig("../temp_analysis/plant_ham8_x.png", dpi=300)
-    return f_, plant_ham8_x
+    return f_, model
 
 def ham8_plant_y():
     data = np.loadtxt("l1_ham8_plant_xyz.txt")
@@ -47,16 +43,18 @@ def ham8_plant_y():
 
     z_tf *= gs13_inv(1j*2*np.pi*f)
     f_ = np.arange(0.0,200.0, 0.001953125)
-    q = 160
-    plant_ham8_y = noise_model(f_, a=0.1, b=-2.2,q=q, na=10, nb=5)
+    s = control.tf("s")
+    w1 = 1.25*2*np.pi
+    q1 = 1/0.9
+    model = w1**2 / (s**2+w1/q1*s+w1**2) * 12.5
     plt.clf()
     plt.loglog(f, abs(z_tf))
-    plt.loglog(f_,plant_ham8_y , label="model")
+    plt.loglog(f_, abs(model(1j*2*np.pi*f_)), label="model")
     plt.title("HAM8 Plant Y Dof")
     plt.grid(which="both")
     plt.legend()
     plt.savefig("../temp_analysis/plant_ham8_y.png", dpi=300)
-    return f_, plant_ham8_y
+    return f_, model
 
 def ham8_plant_z():
     data = np.loadtxt("l1_ham8_plant_xyz.txt")
@@ -72,16 +70,18 @@ def ham8_plant_z():
 
     z_tf *= gs13_inv(1j*2*np.pi*f)
     f_ = np.arange(0.0,200.0, 0.001953125)
-    q = 110
-    plant_ham8_z = noise_model(f_, a=0.3, b=-2.2,q=q, na=11, nb=3)
+    s = control.tf("s")
+    w1 = 1.9*2*np.pi
+    q1 = 1/0.7
+    model = w1**2 / (s**2+w1/q1*s+w1**2) * 6.5
     plt.clf()
     plt.loglog(f, abs(z_tf))
-    plt.loglog(f_,plant_ham8_z , label="model")
+    plt.loglog(f_, abs(model(1j*2*np.pi*f_)), label="model")
     plt.title("HAM8 Plant Z Dof")
     plt.grid(which="both")
     plt.legend()
     plt.savefig("../temp_analysis/plant_ham8_z.png", dpi=300)
-    return f_, plant_ham8_z
+    return f_, model
 
 
 def noise_model_trans(f, a, b, q, na, nb):
@@ -98,22 +98,18 @@ def ham8_trans_x():
     z_tf = z_real + 1j*z_imag
 
     s = control.tf("s")
-    wn = 1*2*np.pi
-    q = 1/np.sqrt(2)
-    gs13_inv = (s**2+wn/q*s+wn**2) / s**3
-
-    z_tf *= gs13_inv(1j*2*np.pi*f)
-    q = 0.22
     f_ = np.arange(0.0,200.0, 0.001953125)
-    trans_ham8_x = noise_model_trans(f_, a=2.9, b=0,q=q, na=1, nb=0)
+    w1 = 1.25*2*np.pi
+    q1 = 1/1.1
+    model = w1**2 / (s**2+w1/q1*s+w1**2) * 0.95
     plt.clf()
     plt.loglog(f, abs(z_tf))
-    plt.loglog(f_,trans_ham8_x , label="model")
+    plt.loglog(f_, abs(model(1j*2*np.pi*f_)), label="model")
     plt.title("ham8 trans X Dof")
     plt.grid(which="both")
     plt.legend()
     plt.savefig("../temp_analysis/trans_ham8_x.png", dpi=300)
-    return f_, trans_ham8_x
+    return f_, model
 
 def ham8_trans_y():
     data = np.loadtxt("l1_ham8_trans_xyz.txt")
@@ -123,22 +119,19 @@ def ham8_trans_y():
     z_tf = z_real + 1j*z_imag
 
     s = control.tf("s")
-    wn = 1*2*np.pi
-    q = 1/np.sqrt(2)
-    gs13_inv = (s**2+wn/q*s+wn**2) / s**3
-
-    z_tf *= gs13_inv(1j*2*np.pi*f)
     f_ = np.arange(0.0,200.0, 0.001953125)
-    q = 0.22
-    trans_ham8_y = noise_model_trans(f_, a=2.9, b=0,q=q, na=1, nb=0)
+    w1 = 1.25*2*np.pi
+    q1 = 1/1.1
+    model = w1**2 / (s**2+w1/q1*s+w1**2) * 0.95
     plt.clf()
     plt.loglog(f, abs(z_tf))
-    plt.loglog(f_,trans_ham8_y , label="model")
+    plt.loglog(f_, abs(model(1j*2*np.pi*f_)), label="model")
     plt.title("ham8 trans Y Dof")
     plt.grid(which="both")
     plt.legend()
     plt.savefig("../temp_analysis/trans_ham8_y.png", dpi=300)
-    return f_, trans_ham8_y
+    return f_, model
+
 
 def ham8_trans_z():
     data = np.loadtxt("l1_ham8_trans_xyz.txt")
@@ -148,22 +141,19 @@ def ham8_trans_z():
     z_tf = z_real + 1j*z_imag
 
     s = control.tf("s")
-    wn = 1*2*np.pi
-    q = 1/np.sqrt(2)
-    gs13_inv = (s**2+wn/q*s+wn**2) / s**3
-
-    z_tf *= gs13_inv(1j*2*np.pi*f)
     f_ = np.arange(0.0,200.0, 0.001953125)
-    q = 0.27
-    trans_ham8_z = noise_model_trans(f_, a=2.6, b=0, q=q, na=1, nb=0)
+    w1 = 1.825*2*np.pi
+    q1 = 1/1.
+    model = w1**2 / (s**2+w1/q1*s+w1**2) * 1.05
     plt.clf()
     plt.loglog(f, abs(z_tf))
-    plt.loglog(f_,trans_ham8_z , label="model")
+    plt.loglog(f_, abs(model(1j*2*np.pi*f_)), label="model")
     plt.title("ham8 trans Z Dof")
     plt.grid(which="both")
     plt.legend()
     plt.savefig("../temp_analysis/trans_ham8_z.png", dpi=300)
-    return f_, trans_ham8_z
+    return f_, model
+
 
 ham8_plant_x()
 ham8_plant_y()
