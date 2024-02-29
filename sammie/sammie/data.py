@@ -88,16 +88,16 @@ def pad_asd(asd_a, asd_b, cutoff_freq):
 
     return asd_a, asd_b
 
-conn = nds2.connection('nds.ligo-la.caltech.edu',31200)
-for start_times in config.gps_sample_list:
+def padded_ground_motion(gpstime):
+    conn = nds2.connection('nds.ligo-la.caltech.edu',31200)
     # Checking coherence between ETMX and ITMX ground sensors
-    print(start_times)
+    start_time = gpstime
 
     ITMX_data = fetch_timeseries_data('L1:ISI-GND_STS_ITMX_X_DQ',
-                                    start_times, start_times + 
+                                    start_time, start_time + 
                                     (config.averages*config.coherence_overlap +1)*config.coherence_fftlen, conn )
     ITMY_data = fetch_timeseries_data('L1:ISI-GND_STS_ITMY_X_DQ',
-                                    start_times, start_times + 
+                                    start_time, start_time + 
                                     (config.averages*config.coherence_overlap +1)*config.coherence_fftlen, conn )
     print("done")
 
@@ -110,15 +110,15 @@ for start_times in config.gps_sample_list:
                                 name=asd_a.name, 
                                 epoch=asd_a.epoch, 
                                 channel=asd_a.channel)
-    
+
     asd_dis_b = FrequencySeries(data=asd_b.value/(2*np.pi*asd_b.frequencies), 
                                 f0=asd_b.f0, 
                                 df=asd_b.df, 
                                 name=asd_b.name, 
                                 epoch=asd_b.epoch, 
                                 channel=asd_b.channel)
-    
+
     cutoff_freq= frequency_minima_scipy_groundmotion(ITMX_data, ITMY_data, asd_dis_a, asd_dis_b)
     padded_asd_a, padded_asd_b = pad_asd(asd_dis_a, asd_dis_b, cutoff_freq)
-    #plot_asd_coherence(ITMX_data, ITMY_data, start_times, cutoff_freq)
-    plot_padded_asd(padded_asd_a, padded_asd_b,cutoff_freq)
+
+    return padded_asd_a.frequencies.value, padded_asd_a, padded_asd_b
