@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def ham8_plant_x():
-    data = np.loadtxt("l1_ham8_plant_xyz.txt")
+    data = np.loadtxt("../etc/data/l1_ham8_plant_xyz.txt")
     f = data[:, 0]
     z_real = data[:, 1]
     z_imag = data[:, 2]
@@ -24,7 +24,7 @@ def ham8_plant_x():
     return f_, model
 
 def ham8_plant_y():
-    data = np.loadtxt("l1_ham8_plant_xyz.txt")
+    data = np.loadtxt("../etc/data/l1_ham8_plant_xyz.txt")
     f = data[:, 0]
     z_real = data[:, 3]
     z_imag = data[:, 4]
@@ -46,7 +46,7 @@ def ham8_plant_y():
     return f_, model
 
 def ham8_plant_z():
-    data = np.loadtxt("l1_ham8_plant_xyz.txt")
+    data = np.loadtxt("../etc/data/l1_ham8_plant_xyz.txt")
     f = data[:, 0]
     z_real = data[:, 5]
     z_imag = data[:, 6]
@@ -74,7 +74,7 @@ def noise_model_trans(f, a, b, q, na, nb):
     return noise
 
 def ham8_trans_x():
-    data = np.loadtxt("l1_ham8_trans_xyz.txt")
+    data = np.loadtxt("../etc/data/l1_ham8_trans_xyz.txt")
     f = data[:, 0]
     z_real = data[:, 1]
     z_imag = data[:, 2]
@@ -89,7 +89,7 @@ def ham8_trans_x():
     return f_, model
 
 def ham8_trans_y():
-    data = np.loadtxt("l1_ham8_trans_xyz.txt")
+    data = np.loadtxt("../etc/data/l1_ham8_trans_xyz.txt")
     f = data[:, 0]
     z_real = data[:, 3]
     z_imag = data[:, 4]
@@ -105,7 +105,7 @@ def ham8_trans_y():
 
 
 def ham8_trans_z():
-    data = np.loadtxt("l1_ham8_trans_xyz.txt")
+    data = np.loadtxt("../etc/data/l1_ham8_trans_xyz.txt")
     f = data[:, 0]
     z_real = data[:, 5]
     z_imag = data[:, 6]
@@ -118,11 +118,3 @@ def ham8_trans_z():
     model = w1**2 / (s**2+w1/q1*s+w1**2) * 1.05
 
     return f_, model
-
-
-ham8_plant_x()
-ham8_plant_y()
-ham8_plant_z()
-ham8_trans_x()
-ham8_trans_y()
-ham8_trans_z()

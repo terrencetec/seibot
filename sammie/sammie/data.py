@@ -1,11 +1,11 @@
 from gwpy.timeseries import TimeSeries
 from gwpy.frequencyseries import FrequencySeries
-from etc import config
 import numpy as np
 from scipy.signal import coherence
 from scipy.signal import argrelextrema
 from scipy import optimize
 import matplotlib.pyplot as plt
+import configparser
 import nds2
 
 
@@ -66,7 +66,7 @@ def frequency_minima_scipy_groundmotion(data_A, data_B, asd_dis_a, asd_dis_b):
 
     # from that frequency position to 0 make freq-bins of given width and check for 
     # coherence difference in each bin
-    check_array = np.arange(first_one_coh, 0, -config.bin_width)
+    check_array = np.arange(first_one_coh, 0, -5)
     min_asd = np.min(asd_dis_a.value[0:first_one_coh])
     last_one_coh = np.max(np.where(asd_dis_a.value[0:first_one_coh] == min_asd))
     frequency = asd_dis_a.frequencies[last_one_coh]
@@ -88,21 +88,23 @@ def pad_asd(asd_a, asd_b, cutoff_freq):
 
     return asd_a, asd_b
 
-def padded_ground_motion(gpstime):
+def padded_ground_motion(gpstime, dof):
+    config = configparser.ConfigParser()
+    config.read("../etc/config.ini")
     conn = nds2.connection('nds.ligo-la.caltech.edu',31200)
     # Checking coherence between ETMX and ITMX ground sensors
-    start_time = gpstime
+    start_time = int(config.get('current_run','gpstime'))
+    averages = int(config.get('current_run','averages'))
+    coherence_overlap = float(config.get('current_run','coherence_overlap'))
+    fftlen = int(config.get('current_run','coherence_fftlen'))
+    end_time = start_time + (averages*coherence_overlap +1)*fftlen
+    ITMX_data = fetch_timeseries_data(f'L1:ISI-GND_STS_ITMX_{dof}_DQ',
+                                    start_time, end_time, conn )
+    ITMY_data = fetch_timeseries_data(f'L1:ISI-GND_STS_ITMY_{dof}_DQ',
+                                    start_time, end_time, conn )
 
-    ITMX_data = fetch_timeseries_data('L1:ISI-GND_STS_ITMX_X_DQ',
-                                    start_time, start_time + 
-                                    (config.averages*config.coherence_overlap +1)*config.coherence_fftlen, conn )
-    ITMY_data = fetch_timeseries_data('L1:ISI-GND_STS_ITMY_X_DQ',
-                                    start_time, start_time + 
-                                    (config.averages*config.coherence_overlap +1)*config.coherence_fftlen, conn )
-    print("done")
-
-    asd_a = ITMX_data.asd(fftlength=512,overlap=0.5)
-    asd_b = ITMY_data.asd(fftlength=512,overlap=0.5)
+    asd_a = ITMX_data.asd(fftlength=fftlen,overlap=coherence_overlap)
+    asd_b = ITMY_data.asd(fftlength=fftlen,overlap=coherence_overlap)
 
     asd_dis_a = FrequencySeries(data=asd_a.value/(2*np.pi*asd_a.frequencies), 
                                 f0=asd_a.f0, 
@@ -118,7 +120,8 @@ def padded_ground_motion(gpstime):
                                 epoch=asd_b.epoch, 
                                 channel=asd_b.channel)
 
+    displacement_asd = asd_dis_a.copy()
     cutoff_freq= frequency_minima_scipy_groundmotion(ITMX_data, ITMY_data, asd_dis_a, asd_dis_b)
     padded_asd_a, padded_asd_b = pad_asd(asd_dis_a, asd_dis_b, cutoff_freq)
 
-    return padded_asd_a.frequencies.value, padded_asd_a, padded_asd_b
+    return padded_asd_a.frequencies.value, padded_asd_a.value, displacement_asd.value

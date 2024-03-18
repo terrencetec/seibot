@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def ham7_plant_x():
-    data = np.loadtxt("l1_ham7_plant_xyz.txt")
+    data = np.loadtxt("../etc/data/l1_ham7_plant_xyz.txt")
     f = data[:, 0]
     z_real = data[:, 1]
     z_imag = data[:, 2]
@@ -23,7 +23,7 @@ def ham7_plant_x():
     return f_, model
 
 def ham7_plant_y():
-    data = np.loadtxt("l1_ham7_plant_xyz.txt")
+    data = np.loadtxt("../etc/data/l1_ham7_plant_xyz.txt")
     f = data[:, 0]
     z_real = data[:, 3]
     z_imag = data[:, 4]
@@ -44,7 +44,7 @@ def ham7_plant_y():
     return f_, model
 
 def ham7_plant_z():
-    data = np.loadtxt("l1_ham7_plant_xyz.txt")
+    data = np.loadtxt("../etc/data/l1_ham7_plant_xyz.txt")
     f = data[:, 0]
     z_real = data[:, 5]
     z_imag = data[:, 6]
@@ -65,7 +65,7 @@ def ham7_plant_z():
     return f_, model
 
 def ham7_trans_x():
-    data = np.loadtxt("l1_ham7_trans_xyz.txt")
+    data = np.loadtxt("../etc/data/l1_ham7_trans_xyz.txt")
     f = data[:, 0]
     z_real = data[:, 1]
     z_imag = data[:, 2]
@@ -79,7 +79,7 @@ def ham7_trans_x():
     return f_, model
 
 def ham7_trans_y():
-    data = np.loadtxt("l1_ham7_trans_xyz.txt")
+    data = np.loadtxt("../etc/data/l1_ham7_trans_xyz.txt")
     f = data[:, 0]
     z_real = data[:, 3]
     z_imag = data[:, 4]
@@ -95,7 +95,7 @@ def ham7_trans_y():
 
 
 def ham7_trans_z():
-    data = np.loadtxt("l1_ham7_trans_xyz.txt")
+    data = np.loadtxt("../etc/data/l1_ham7_trans_xyz.txt")
     f = data[:, 0]
     z_real = data[:, 5]
     z_imag = data[:, 6]
