@@ -38,9 +38,9 @@ function_dict = {
     "HAM8_Z_trans" : plant_model_ham8.ham8_trans_z, 
 
 }
-
+start_time = int(config.get('current_run','gpstime'))
 f, pg = function_dict[f'{ham}_{dof}_trans']()
-_, xg, no_pad = padded_ground_motion(1386201618,dof)
+_, xg, no_pad = padded_ground_motion(start_time,dof)
 
 
 k = iso(ham, dof)
@@ -76,7 +76,7 @@ coherence_overlap = float(config.get('current_run','coherence_overlap'))
 fftlen = int(config.get('current_run','coherence_fftlen'))
 end_time = start_time + (averages*coherence_overlap +1)*fftlen
 
-gs13_timeseries = fetch_timeseries_data(f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ", start_time, end_time, conn)
+gs13_timeseries = fetch_timeseries_data(f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ", start_time, end_time, conn, mode='cdsutils')
 
 gs13_resampled = gs13_timeseries.resample(512)
 asd_a = gs13_resampled.asd(fftlength=fftlen,overlap=coherence_overlap)
@@ -89,8 +89,8 @@ gs13_inv = (s**2+wn/q*s+wn**2) / s**3
 
 asd_a_corrected = abs(gs13_inv(1j*2*np.pi*f)) * asd_a.value
 
-plt.loglog(f, x*1e-9, label="ISI {dof} motion")
-plt.loglog(f, no_pad*1e-9, label="")
+plt.loglog(f, x*1e-9, label=f"ISI {dof} motion")
+plt.loglog(f, no_pad*1e-9, label="ground displacement")
 #plt.loglog(f, xg, label='padded')
 
 plt.loglog(asd_a.frequencies, asd_a_corrected *1e-9, label=f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ")

@@ -6,12 +6,17 @@ from scipy.signal import argrelextrema
 from scipy import optimize
 import matplotlib.pyplot as plt
 import configparser
+import cdsutils
 import nds2
 
 
-def fetch_timeseries_data(channel, gps_start, gps_end, conn):
-    
-    data = TimeSeries.fetch(channel, gps_start, gps_end,connection=conn, allow_tape=True)
+def fetch_timeseries_data(channel, gps_start, gps_end, conn, mode):
+    if mode == 'gwpy':
+        data = TimeSeries.fetch(channel, gps_start, gps_end,connection=conn, allow_tape=True)
+    elif mode == 'cdsutils':
+        target_data =  cdsutils.getdata(channel, gps_end-gps_start, gps_start)
+        print(target_data)
+        data = TimeSeries(data=target_data.data, t0=gps_start, dt=1/target_data.sample_rate,name=channel)
     return data
 
 
@@ -99,9 +104,9 @@ def padded_ground_motion(gpstime, dof):
     fftlen = int(config.get('current_run','coherence_fftlen'))
     end_time = start_time + (averages*coherence_overlap +1)*fftlen
     ITMX_data = fetch_timeseries_data(f'L1:ISI-GND_STS_ITMX_{dof}_DQ',
-                                    start_time, end_time, conn )
+                                    start_time, end_time, conn, mode='cdsutils')
     ITMY_data = fetch_timeseries_data(f'L1:ISI-GND_STS_ITMY_{dof}_DQ',
-                                    start_time, end_time, conn )
+                                    start_time, end_time, conn, mode='cdsutils')
 
     asd_a = ITMX_data.asd(fftlength=fftlen,overlap=coherence_overlap)
     asd_b = ITMY_data.asd(fftlength=fftlen,overlap=coherence_overlap)
