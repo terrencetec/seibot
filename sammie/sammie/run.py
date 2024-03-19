@@ -86,6 +86,8 @@ s = control.tf("s")
 wn = 1*2*np.pi
 q = 1/np.sqrt(2)
 gs13_inv = (s**2+wn/q*s+wn**2) / s**3
+#t240_inv = 1/s
+
 
 asd_a_corrected = abs(gs13_inv(1j*2*np.pi*f)) * asd_a.value
 
@@ -94,5 +96,6 @@ plt.loglog(f, no_pad*1e-9, label="ground displacement")
 #plt.loglog(f, xg, label='padded')
 
 plt.loglog(asd_a.frequencies, asd_a_corrected *1e-9, label=f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ")
+#plt.loglog(asd_a.frequencies, asd_a_corrected *1e-9, label=f"L1:ISI-{ham}_BLND_T240{dof}_IN1_DQ")
 plt.legend()
 plt.show()
