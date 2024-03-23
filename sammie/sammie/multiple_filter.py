@@ -1,3 +1,5 @@
+# testing multiple filter 
+
 import foton
 import kontrol
 import matplotlib.pyplot as plt
@@ -38,31 +40,36 @@ function_dict = {
     "HAM8_Z_trans" : plant_model_ham8.ham8_trans_z, 
 
 }
+
 start_time = int(config.get('current_run','gpstime'))
-f, pg = function_dict[f'{ham}_{dof}_trans']()
+
+# required for all
 _, xg, no_pad = padded_ground_motion(start_time,dof)
 
+def predict_motion(ham, dof, h_sc, h1, h2):
 
-k = iso(ham, dof)
-_,p = function_dict[f'{ham}_{dof}_plant']()
+    f, pg = function_dict[f'{ham}_{dof}_trans']()
+    k = iso(ham, dof)
+    _,p = function_dict[f'{ham}_{dof}_plant']()
 
-kp = k * p
+    kp = k * p
+    d = abs(pg(1j*2*np.pi*f)) * xg
 
-d = abs(pg(1j*2*np.pi*f)) * xg
+    _, n_cps = sensor_noise_cps_xy()
+    _, n_seis = sensor_noise_sei()
+    _, n_gs13 = sensor_noise_gs13()
 
-_, n_cps = sensor_noise_cps_xy()
-_, n_seis = sensor_noise_sei()
-_, n_gs13 = sensor_noise_gs13()
+
+    n_sc = kontrol.core.math.quad_sum(n_cps, abs(h_sc(1j*2*np.pi*f))*n_seis, abs((1-h_sc)(1j*2*np.pi*f))*xg)
+    n = kontrol.core.math.quad_sum(abs(h1(1j*2*np.pi*f))*n_sc, abs(h2(1j*2*np.pi*f))*n_gs13)
+    x = kontrol.core.math.quad_sum(abs((1/(1+kp))(1j*2*np.pi*f))*d, abs((kp/(1+kp))(1j*2*np.pi*f))*n)
+    return f, x
+
 
 h_sc = sens_cor(ham, dof)
 h1, h2 = blend(ham, dof)
 
-n_sc = kontrol.core.math.quad_sum(n_cps, abs(h_sc(1j*2*np.pi*f))*n_seis, abs((1-h_sc)(1j*2*np.pi*f))*xg)
-
-n = kontrol.core.math.quad_sum(abs(h1(1j*2*np.pi*f))*n_sc, abs(h2(1j*2*np.pi*f))*n_gs13)
-
-x = kontrol.core.math.quad_sum(abs((1/(1+kp))(1j*2*np.pi*f))*d, abs((kp/(1+kp))(1j*2*np.pi*f))*n)
-
+f, x = predict_motion(ham, dof, h_sc, h1, h2)
 
 
 import nds2
@@ -100,7 +107,7 @@ plt.loglog(f, no_pad*1e-9, label="ground displacement")
 #plt.loglog(f, xg, label='padded')
 
 #plt.loglog(asd_a.frequencies, asd_a_corrected *1e-9, label=f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ")
-plt.loglog(asd_gs13.frequencies, asd_gs13_corrected *1e-9, label=f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ")
+#plt.loglog(asd_gs13.frequencies, asd_gs13_corrected *1e-9, label=f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ")
 plt.loglog(asd_t240.frequencies, asd_t240_corrected *1e-9, label=f"L1:ISI-{ham}_BLND_T240{dof}_IN1_DQ")
 plt.legend()
 plt.show()

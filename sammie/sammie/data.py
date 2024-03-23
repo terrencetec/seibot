@@ -10,9 +10,9 @@ import cdsutils
 import nds2
 
 
-def fetch_timeseries_data(channel, gps_start, gps_end, conn, mode):
+def fetch_timeseries_data(channel, gps_start, gps_end, mode):
     if mode == 'gwpy':
-        data = TimeSeries.fetch(channel, gps_start, gps_end,connection=conn, allow_tape=True)
+        data = TimeSeries.fetch(channel, gps_start, gps_end)
     elif mode == 'cdsutils':
         target_data =  cdsutils.getdata(channel, gps_end-gps_start, gps_start)
         print(target_data)
@@ -96,7 +96,7 @@ def pad_asd(asd_a, asd_b, cutoff_freq):
 def padded_ground_motion(gpstime, dof):
     config = configparser.ConfigParser()
     config.read("../etc/config.ini")
-    conn = nds2.connection('nds.ligo-la.caltech.edu',31200)
+    #conn = nds2.connection('nds.ligo-la.caltech.edu',31200)
     # Checking coherence between ETMX and ITMX ground sensors
     start_time = int(config.get('current_run','gpstime'))
     averages = int(config.get('current_run','averages'))
@@ -104,9 +104,9 @@ def padded_ground_motion(gpstime, dof):
     fftlen = int(config.get('current_run','coherence_fftlen'))
     end_time = start_time + (averages*coherence_overlap +1)*fftlen
     ITMX_data = fetch_timeseries_data(f'L1:ISI-GND_STS_ITMX_{dof}_DQ',
-                                    start_time, end_time, conn, mode='cdsutils')
+                                    start_time, end_time, mode='cdsutils')
     ITMY_data = fetch_timeseries_data(f'L1:ISI-GND_STS_ITMY_{dof}_DQ',
-                                    start_time, end_time, conn, mode='cdsutils')
+                                    start_time, end_time, mode='cdsutils')
 
     asd_a = ITMX_data.asd(fftlength=fftlen,overlap=coherence_overlap)
     asd_b = ITMY_data.asd(fftlength=fftlen,overlap=coherence_overlap)
