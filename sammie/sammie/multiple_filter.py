@@ -5,7 +5,7 @@ import kontrol
 import matplotlib.pyplot as plt
 import numpy as np
 import control
-
+import glob
 import warnings
 
 with warnings.catch_warnings():
@@ -65,13 +65,38 @@ def predict_motion(ham, dof, h_sc, h1, h2):
     x = kontrol.core.math.quad_sum(abs((1/(1+kp))(1j*2*np.pi*f))*d, abs((kp/(1+kp))(1j*2*np.pi*f))*n)
     return f, x
 
-
 h_sc = sens_cor(ham, dof)
 h1, h2 = blend(ham, dof)
-
 f, x = predict_motion(ham, dof, h_sc, h1, h2)
 
+bandwidth  = float(config.get('current_run','bandwidth'))
+rms_val =np.round(kontrol.core.spectral.asd2rms(x[1:]*2*np.pi*f[1:], df=bandwidth, return_series=False))
 
+plt.loglog(f, x*1e-9, label=f"ISI {dof} motion default rms = {rms_val} nm/s")
+rms_val =np.round(kontrol.core.spectral.asd2rms(xg[1:]*2*np.pi*f[1:], df=bandwidth, return_series=False))
+plt.loglog(f, xg*1e-9, label=f"ground displacement rms = {rms_val} nm/s")
+
+hsc_prefilt = kontrol.load_transfer_function("../etc/data/h_sc_prefilt.pkl")
+h2_prefilt = kontrol.load_transfer_function("../etc/data/h2_prefilter.pkl")
+sc_files = glob.glob("../etc/data/filter_bank/sensor_correction_bank/*.*")
+h1_files = glob.glob("../etc/data/filter_bank/h1_bank/*.*")
+h2_files = glob.glob("../etc/data/filter_bank/h2_bank/*.*")
+
+for i in range(len(sc_files)): 
+    h_sc_hinf1 = kontrol.load_transfer_function(sc_files[i])
+    for j in range(len(h1_files)):
+        h1_hinf1 = kontrol.load_transfer_function(h1_files[j])
+        h2_hinf1 = kontrol.load_transfer_function(h2_files[j])
+
+        f_1,x_1 = predict_motion(ham, dof, h_sc_hinf1*hsc_prefilt, h1_hinf1, h2_hinf1*h2_prefilt)
+        rms_val = np.round(kontrol.core.spectral.asd2rms(x_1[1:]*2*np.pi*f_1[1:], df=bandwidth, return_series=False))
+        plt.loglog(f_1, x_1*1e-9, label=f"ISI {dof} motion filter {i*len(sc_files) + j} rms = {rms_val} nm/s")
+
+plt.legend()
+plt.show()
+
+
+'''
 import nds2
 from sammie.data import padded_ground_motion, fetch_timeseries_data
 import matplotlib.pyplot as plt
@@ -102,12 +127,13 @@ t240_inv = 1/s
 asd_gs13_corrected = abs(gs13_inv(1j*2*np.pi*f)) * asd_gs13.value
 asd_t240_corrected = abs(t240_inv(1j*2*np.pi*f)) * asd_t240.value
 
-plt.loglog(f, x*1e-9, label=f"ISI {dof} motion")
+
+plt.loglog(f, x*1e-9, label=f"ISI {dof} motion default")
+plt.loglog(f_1, x_1*1e-9, label=f"ISI {dof} motion filter 1")
 plt.loglog(f, no_pad*1e-9, label="ground displacement")
 #plt.loglog(f, xg, label='padded')
 
 #plt.loglog(asd_a.frequencies, asd_a_corrected *1e-9, label=f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ")
 #plt.loglog(asd_gs13.frequencies, asd_gs13_corrected *1e-9, label=f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ")
 plt.loglog(asd_t240.frequencies, asd_t240_corrected *1e-9, label=f"L1:ISI-{ham}_BLND_T240{dof}_IN1_DQ")
-plt.legend()
-plt.show()
+'''
