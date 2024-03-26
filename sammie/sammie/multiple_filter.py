@@ -49,7 +49,7 @@ _, xg, no_pad = padded_ground_motion(start_time,dof)
 def predict_motion(ham, dof, h_sc, h1, h2):
 
     f, pg = function_dict[f'{ham}_{dof}_trans']()
-    k = iso(ham, dof)
+    k = -iso(ham, dof)
     _,p = function_dict[f'{ham}_{dof}_plant']()
 
     kp = k * p
@@ -68,13 +68,15 @@ def predict_motion(ham, dof, h_sc, h1, h2):
 h_sc = sens_cor(ham, dof)
 h1, h2 = blend(ham, dof)
 f, x = predict_motion(ham, dof, h_sc, h1, h2)
+rms_dict = {}
 
 bandwidth  = float(config.get('current_run','bandwidth'))
 rms_val =np.round(kontrol.core.spectral.asd2rms(x[1:]*2*np.pi*f[1:], df=bandwidth, return_series=False))
-
+rms_dict['current'] = rms_val 
 plt.loglog(f, x*1e-9, label=f"ISI {dof} motion default rms = {rms_val} nm/s")
 rms_val =np.round(kontrol.core.spectral.asd2rms(xg[1:]*2*np.pi*f[1:], df=bandwidth, return_series=False))
-plt.loglog(f, xg*1e-9, label=f"ground displacement rms = {rms_val} nm/s")
+rms_dict['ground_motion'] = rms_val 
+plt.loglog(f, no_pad*1e-9, label=f"ground displacement rms = {rms_val} nm/s")
 
 hsc_prefilt = kontrol.load_transfer_function("../etc/data/h_sc_prefilt.pkl")
 h2_prefilt = kontrol.load_transfer_function("../etc/data/h2_prefilter.pkl")
@@ -82,17 +84,40 @@ sc_files = glob.glob("../etc/data/filter_bank/sensor_correction_bank/*.*")
 h1_files = glob.glob("../etc/data/filter_bank/h1_bank/*.*")
 h2_files = glob.glob("../etc/data/filter_bank/h2_bank/*.*")
 
+
 for i in range(len(sc_files)): 
     h_sc_hinf1 = kontrol.load_transfer_function(sc_files[i])
     for j in range(len(h1_files)):
         h1_hinf1 = kontrol.load_transfer_function(h1_files[j])
         h2_hinf1 = kontrol.load_transfer_function(h2_files[j])
 
-        f_1,x_1 = predict_motion(ham, dof, h_sc_hinf1*hsc_prefilt, h1_hinf1, h2_hinf1*h2_prefilt)
+        f_1,x_1 = predict_motion(ham, dof, h_sc_hinf1*hsc_prefilt, (1- h2_hinf1*h2_prefilt), h2_hinf1*h2_prefilt)
+        new = 1- h_sc_hinf1*hsc_prefilt
+        plt.loglog(f_1,abs(new(1j*2*np.pi*f_1)))
         rms_val = np.round(kontrol.core.spectral.asd2rms(x_1[1:]*2*np.pi*f_1[1:], df=bandwidth, return_series=False))
-        plt.loglog(f_1, x_1*1e-9, label=f"ISI {dof} motion filter {i*len(sc_files) + j} rms = {rms_val} nm/s")
+        plt.loglog(f_1, x_1*1e-9, label=f"ISI {dof} motion filter {sc_files[i].split('/')[-1]} + {h1_files[j].split('/')[-1]}  rms = {rms_val} nm/s")
 
-plt.legend()
+        print(f"{sc_files[i].split('/')[-1]} + {h1_files[j].split('/')[-1]}")
+        rms_dict[f"{sc_files[i].split('/')[-1]} + {h1_files[j].split('/')[-1]}"] = rms_val 
+        break
+    break
+
+
+
+import json
+file = 'rms.json' 
+with open(file, 'w') as f:
+    dump_string = json.dumps(rms_dict, indent=4)
+    json.dump(dump_string, f)
+
+
+temp = min(rms_dict.values())
+res = [key for key in rms_dict if rms_dict[key] == temp]
+print("Keys with minimum values are : " + str(res))
+
+
+
+plt.legend(prop={'size': 6})
 plt.show()
 
 

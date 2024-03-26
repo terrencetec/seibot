@@ -43,7 +43,7 @@ f, pg = function_dict[f'{ham}_{dof}_trans']()
 _, xg, no_pad = padded_ground_motion(start_time,dof)
 
 
-k = iso(ham, dof)
+k = -iso(ham, dof)
 _,p = function_dict[f'{ham}_{dof}_plant']()
 
 kp = k * p
