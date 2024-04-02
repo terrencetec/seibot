@@ -16,7 +16,7 @@ from sammie import plant_model_ham8
 
 from sammie.blend_sc_iso import sens_cor, blend, iso
 from sammie.sensor_noise_model import sensor_noise_cps_xy, sensor_noise_gs13, sensor_noise_sei
-from sammie.data import padded_ground_motion, fetch_timeseries_data
+from sammie.data import padded_ground_motion, fetch_timeseries_data, conditional_n_sei
 
 config = configparser.ConfigParser()
 config.read("../etc/config.ini")
@@ -40,7 +40,7 @@ function_dict = {
 }
 start_time = int(config.get('current_run','gpstime'))
 f, pg = function_dict[f'{ham}_{dof}_trans']()
-_, xg, no_pad = padded_ground_motion(start_time,dof)
+_, xg, no_pad, n_seis = padded_ground_motion(start_time,dof)
 
 
 k = -iso(ham, dof)
@@ -51,7 +51,7 @@ kp = k * p
 d = abs(pg(1j*2*np.pi*f)) * xg
 
 _, n_cps = sensor_noise_cps_xy()
-_, n_seis = sensor_noise_sei()
+#_, n_seis = sensor_noise_sei()
 _, n_gs13 = sensor_noise_gs13()
 
 h_sc = sens_cor(ham, dof)
@@ -97,6 +97,7 @@ asd_t240_corrected = abs(t240_inv(1j*2*np.pi*f)) * asd_t240.value
 
 plt.loglog(f, x*1e-9, label=f"ISI {dof} motion")
 plt.loglog(f, no_pad*1e-9, label="ground displacement")
+plt.loglog(f,n_seis, label="Seismometer noise")
 #plt.loglog(f, xg, label='padded')
 
 #plt.loglog(asd_a.frequencies, asd_a_corrected *1e-9, label=f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ")

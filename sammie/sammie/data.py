@@ -7,16 +7,21 @@ from scipy import optimize
 import matplotlib.pyplot as plt
 import configparser
 import cdsutils
+from scipy.optimize import curve_fit
 import nds2
 
+def noise_model(f, a, na):
+    """Noise model for STS noise"""
+
+    noise = ((na/f**a)**2)**.5
+    return noise
 
 def fetch_timeseries_data(channel, gps_start, gps_end, mode):
     if mode == 'gwpy':
         data = TimeSeries.fetch(channel, gps_start, gps_end)
     elif mode == 'cdsutils':
         target_data =  cdsutils.getdata(channel, gps_end-gps_start, gps_start)
-        print(target_data)
-        data = TimeSeries(data=target_data.data, t0=gps_start, dt=1/target_data.sample_rate,name=channel)
+        data = TimeSeries(data=target_data.data*1e-9, t0=gps_start, dt=1/target_data.sample_rate,name=channel)
     return data
 
 
@@ -127,6 +132,30 @@ def padded_ground_motion(gpstime, dof):
 
     displacement_asd = asd_dis_a.copy()
     cutoff_freq= frequency_minima_scipy_groundmotion(ITMX_data, ITMY_data, asd_dis_a, asd_dis_b)
+    _,n_sei = conditional_n_sei(cutoff_freq, noise_model, asd_dis_a)
     padded_asd_a, padded_asd_b = pad_asd(asd_dis_a, asd_dis_b, cutoff_freq)
 
-    return padded_asd_a.frequencies.value, padded_asd_a.value, displacement_asd.value
+    
+
+    return padded_asd_a.frequencies.value, padded_asd_a.value, displacement_asd.value, n_sei
+
+def conditional_n_sei(cutoff, noise_model, disp_asd):
+    upper = np.max(np.where(disp_asd.frequencies.value == cutoff))
+    lower = np.max(np.where((disp_asd.frequencies.value - 1e-2) <0.001))
+    x = disp_asd.frequencies.value[lower:upper]
+    y = disp_asd.value[lower:upper]
+    param, _ = curve_fit(noise_model, x, y)
+    n_sei = noise_model(disp_asd.frequencies.value[1:], a=param[0], na=param[1])
+
+    return disp_asd.frequencies.value[1:], n_sei
+
+def conditional_n_sei_vishack(f, cutoff, noise_model, disp_asd):
+    upper = cutoff
+    lower = np.max(np.where((f - 1e-2) <0.001))
+    x = f[lower:upper]
+    y = disp_asd[lower:upper]
+    param, _ = curve_fit(noise_model, x, y)
+    print(f'parameters : {param}')
+    n_sei = noise_model(f[1:], a=param[0], na=param[1])
+
+    return f[1:], n_sei

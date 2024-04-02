@@ -7,7 +7,7 @@ import numpy as np
 import control
 import glob
 import warnings
-
+import vishack
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
 
@@ -18,7 +18,7 @@ from sammie import plant_model_ham8
 
 from sammie.blend_sc_iso import sens_cor, blend, iso
 from sammie.sensor_noise_model import sensor_noise_cps_xy, sensor_noise_gs13, sensor_noise_sei
-from sammie.data import padded_ground_motion, fetch_timeseries_data
+from sammie.data import padded_ground_motion, fetch_timeseries_data, pad_asd , conditional_n_sei, noise_model, conditional_n_sei_vishack
 
 config = configparser.ConfigParser()
 config.read("../etc/config.ini")
@@ -43,21 +43,39 @@ function_dict = {
 
 start_time = int(config.get('current_run','gpstime'))
 
-# required for all
-_, xg, no_pad = padded_ground_motion(start_time,dof)
+data = vishack.data.diaggui.Diaggui("../etc/data/seismic_injection_data_20231210.xml")
+f, psd = data.psd("L1:ISI-GND_STS_ITMY_Y_DQ")
+psd = psd* 1/(2*np.pi*f)*1e-9
 
-def predict_motion(ham, dof, h_sc, h1, h2):
+plt.loglog(f,psd,label='ground motion')
+minimum = min(psd[0:100])
+print(np.where(psd == minimum))
+cutoff = 40
+_,n_seis = conditional_n_sei_vishack(f, cutoff, noise_model, psd)
+psd[0:cutoff] = psd[cutoff]
 
-    f, pg = function_dict[f'{ham}_{dof}_trans']()
+
+
+
+
+#f, xg, no_pad, n_seis = padded_ground_motion(start_time,dof)
+f = f[1:]
+xg = psd[1:]
+
+
+
+def predict_motion(ham, dof, h_sc, h1, h2, f):
+
+    _, pg = function_dict[f'{ham}_{dof}_trans']()
     k = -iso(ham, dof)
     _,p = function_dict[f'{ham}_{dof}_plant']()
 
     kp = k * p
     d = abs(pg(1j*2*np.pi*f)) * xg
 
-    _, n_cps = sensor_noise_cps_xy()
-    _, n_seis = sensor_noise_sei()
-    _, n_gs13 = sensor_noise_gs13()
+    _, n_cps = sensor_noise_cps_xy(f)
+    #_, n_seis = sensor_noise_sei()
+    _, n_gs13 = sensor_noise_gs13(f)
 
 
     n_sc = kontrol.core.math.quad_sum(n_cps, abs(h_sc(1j*2*np.pi*f))*n_seis, abs((1-h_sc)(1j*2*np.pi*f))*xg)
@@ -67,16 +85,16 @@ def predict_motion(ham, dof, h_sc, h1, h2):
 
 h_sc = sens_cor(ham, dof)
 h1, h2 = blend(ham, dof)
-f, x = predict_motion(ham, dof, h_sc, h1, h2)
+f, x = predict_motion(ham, dof, h_sc, h1, h2, f)
 rms_dict = {}
 
 bandwidth  = float(config.get('current_run','bandwidth'))
-rms_val =np.round(kontrol.core.spectral.asd2rms(x[1:]*2*np.pi*f[1:], df=bandwidth, return_series=False))
+rms_val = kontrol.core.spectral.asd2rms(x[1:]*2*np.pi*f[1:], df=bandwidth, return_series=False)
 rms_dict['current'] = rms_val 
-plt.loglog(f, x*1e-9, label=f"ISI {dof} motion default rms = {rms_val} nm/s")
-rms_val =np.round(kontrol.core.spectral.asd2rms(xg[1:]*2*np.pi*f[1:], df=bandwidth, return_series=False))
+plt.loglog(f, x, label=f"ISI {dof} motion default rms = {rms_val} nm/s")
+rms_val =kontrol.core.spectral.asd2rms(xg[1:]*2*np.pi*f[1:], df=bandwidth, return_series=False)
 rms_dict['ground_motion'] = rms_val 
-plt.loglog(f, no_pad*1e-9, label=f"ground displacement rms = {rms_val} nm/s")
+#plt.loglog(f, no_pad, label=f"ground displacement rms = {rms_val} nm/s")
 
 hsc_prefilt = kontrol.load_transfer_function("../etc/data/h_sc_prefilt.pkl")
 h2_prefilt = kontrol.load_transfer_function("../etc/data/h2_prefilter.pkl")
@@ -91,35 +109,18 @@ for i in range(len(sc_files)):
         h1_hinf1 = kontrol.load_transfer_function(h1_files[j])
         h2_hinf1 = kontrol.load_transfer_function(h2_files[j])
 
-        f_1,x_1 = predict_motion(ham, dof, h_sc_hinf1*hsc_prefilt, (1- h2_hinf1*h2_prefilt), h2_hinf1*h2_prefilt)
+        f_1,x_1 = predict_motion(ham, dof, h_sc_hinf1*hsc_prefilt, (1- h2_hinf1*h2_prefilt), h2_hinf1*h2_prefilt, f)
         new = 1- h_sc_hinf1*hsc_prefilt
-        plt.loglog(f_1,abs(new(1j*2*np.pi*f_1)))
-        rms_val = np.round(kontrol.core.spectral.asd2rms(x_1[1:]*2*np.pi*f_1[1:], df=bandwidth, return_series=False))
-        plt.loglog(f_1, x_1*1e-9, label=f"ISI {dof} motion filter {sc_files[i].split('/')[-1]} + {h1_files[j].split('/')[-1]}  rms = {rms_val} nm/s")
+        rms_val = kontrol.core.spectral.asd2rms(x_1[1:]*2*np.pi*f_1[1:], df=bandwidth, return_series=False)
+        print(rms_val)
+        plt.loglog(f_1, x_1, label=f"ISI {dof} motion filter {sc_files[i].split('/')[-1]} + {h1_files[j].split('/')[-1]}  rms = {rms_val} nm")
 
         print(f"{sc_files[i].split('/')[-1]} + {h1_files[j].split('/')[-1]}")
         rms_dict[f"{sc_files[i].split('/')[-1]} + {h1_files[j].split('/')[-1]}"] = rms_val 
-        break
-    break
-
-
-
-import json
-file = 'rms.json' 
-with open(file, 'w') as f:
-    dump_string = json.dumps(rms_dict, indent=4)
-    json.dump(dump_string, f)
-
 
 temp = min(rms_dict.values())
 res = [key for key in rms_dict if rms_dict[key] == temp]
 print("Keys with minimum values are : " + str(res))
-
-
-
-plt.legend(prop={'size': 6})
-plt.show()
-
 
 '''
 import nds2
@@ -149,16 +150,24 @@ gs13_inv = (s**2+wn/q*s+wn**2) / s**3
 t240_inv = 1/s
 
 
-asd_gs13_corrected = abs(gs13_inv(1j*2*np.pi*f)) * asd_gs13.value
-asd_t240_corrected = abs(t240_inv(1j*2*np.pi*f)) * asd_t240.value
+asd_gs13_corrected = abs(gs13_inv(1j*2*np.pi*f))*asd_gs13.value[1:]
+asd_t240_corrected = abs(t240_inv(1j*2*np.pi*f))*asd_t240.value[1:]
 
+h2 = kontrol.load_transfer_function(h2_files[0])
 
-plt.loglog(f, x*1e-9, label=f"ISI {dof} motion default")
-plt.loglog(f_1, x_1*1e-9, label=f"ISI {dof} motion filter 1")
-plt.loglog(f, no_pad*1e-9, label="ground displacement")
-#plt.loglog(f, xg, label='padded')
+_, n_gs13 = sensor_noise_gs13(f)
+new = abs(h2(1j*2*np.pi*f))*n_gs13
+plt.loglog(f,n_seis, label="Seismometer noise")
+plt.loglog(f,n_gs13, label="GS13 noise")
+plt.loglog(f,new, label="product")
 
-#plt.loglog(asd_a.frequencies, asd_a_corrected *1e-9, label=f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ")
-#plt.loglog(asd_gs13.frequencies, asd_gs13_corrected *1e-9, label=f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ")
-plt.loglog(asd_t240.frequencies, asd_t240_corrected *1e-9, label=f"L1:ISI-{ham}_BLND_T240{dof}_IN1_DQ")
+#plt.loglog(asd_a.frequencies, asd_a_corrected, label=f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ")
+plt.loglog(asd_gs13.frequencies[1:], asd_gs13_corrected, label=f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ")
+plt.loglog(asd_t240.frequencies[1:], asd_t240_corrected, label=f"L1:ISI-{ham}_BLND_T240{dof}_IN1_DQ")
 '''
+_, n_gs13 = sensor_noise_gs13(f)
+plt.loglog(f,n_seis, label="N_seis")
+plt.loglog(f, n_gs13, label="GS 13")
+plt.legend(prop={'size': 6})
+plt.show()
+
