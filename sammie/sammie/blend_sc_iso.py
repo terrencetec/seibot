@@ -19,6 +19,7 @@ def sens_cor(ham,dof):
     for fm in filter_fms:
         hsc_foton = ff[config.get( ham,f'SC_{dof}_filter_name')][fm-1]
         zpk = hsc_foton.get_zpk()
+        print(zpk)
         h_sc_tf = kontrol.core.foton.get_zpk2tf(zpk)
         h_sc = h_sc * h_sc_tf
     return h_sc

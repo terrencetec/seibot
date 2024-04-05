@@ -17,8 +17,8 @@ from sammie import plant_model_ham7
 from sammie import plant_model_ham8 
 
 from sammie.blend_sc_iso import sens_cor, blend, iso
-from sammie.sensor_noise_model import sensor_noise_cps_xy, sensor_noise_gs13, sensor_noise_sei
-from sammie.data import padded_ground_motion, fetch_timeseries_data, pad_asd , conditional_n_sei, noise_model, conditional_n_sei_vishack
+from sammie.sensor_noise_model import sensor_noise_cps_xy, sensor_noise_gs13
+from sammie.data import padded_ground_motion, fetch_timeseries_data
 
 config = configparser.ConfigParser()
 config.read("../etc/config.ini")
@@ -43,29 +43,11 @@ function_dict = {
 
 start_time = int(config.get('current_run','gpstime'))
 
-data = vishack.data.diaggui.Diaggui("../etc/data/seismic_injection_data_20231210.xml")
-f, psd = data.psd("L1:ISI-GND_STS_ITMY_Y_DQ")
-psd = psd* 1/(2*np.pi*f)*1e-9
-
-plt.loglog(f,psd,label='ground motion')
-minimum = min(psd[0:100])
-print(np.where(psd == minimum))
-cutoff = 40
-_,n_seis = conditional_n_sei_vishack(f, cutoff, noise_model, psd)
-psd[0:cutoff] = psd[cutoff]
-
-
-
-
-
-#f, xg, no_pad, n_seis = padded_ground_motion(start_time,dof)
-f = f[1:]
-xg = psd[1:]
-
-
+start_time = int(config.get('current_run','gpstime'))
+_, pg = function_dict[f'{ham}_{dof}_trans']()
+f, xg, no_pad, n_seis = padded_ground_motion(start_time,dof)
 
 def predict_motion(ham, dof, h_sc, h1, h2, f):
-
     _, pg = function_dict[f'{ham}_{dof}_trans']()
     k = -iso(ham, dof)
     _,p = function_dict[f'{ham}_{dof}_plant']()
@@ -74,7 +56,6 @@ def predict_motion(ham, dof, h_sc, h1, h2, f):
     d = abs(pg(1j*2*np.pi*f)) * xg
 
     _, n_cps = sensor_noise_cps_xy(f)
-    #_, n_seis = sensor_noise_sei()
     _, n_gs13 = sensor_noise_gs13(f)
 
 
@@ -94,7 +75,7 @@ rms_dict['current'] = rms_val
 plt.loglog(f, x, label=f"ISI {dof} motion default rms = {rms_val} nm/s")
 rms_val =kontrol.core.spectral.asd2rms(xg[1:]*2*np.pi*f[1:], df=bandwidth, return_series=False)
 rms_dict['ground_motion'] = rms_val 
-#plt.loglog(f, no_pad, label=f"ground displacement rms = {rms_val} nm/s")
+plt.loglog(f, no_pad, label=f"ground displacement rms = {rms_val} nm/s")
 
 hsc_prefilt = kontrol.load_transfer_function("../etc/data/h_sc_prefilt.pkl")
 h2_prefilt = kontrol.load_transfer_function("../etc/data/h2_prefilter.pkl")
@@ -111,7 +92,7 @@ for i in range(len(sc_files)):
 
         f_1,x_1 = predict_motion(ham, dof, h_sc_hinf1*hsc_prefilt, (1- h2_hinf1*h2_prefilt), h2_hinf1*h2_prefilt, f)
         new = 1- h_sc_hinf1*hsc_prefilt
-        rms_val = kontrol.core.spectral.asd2rms(x_1[1:]*2*np.pi*f_1[1:], df=bandwidth, return_series=False)
+        rms_val = kontrol.core.spectral.asd2rms(x_1*2*np.pi*f_1, df=bandwidth, return_series=False)
         print(rms_val)
         plt.loglog(f_1, x_1, label=f"ISI {dof} motion filter {sc_files[i].split('/')[-1]} + {h1_files[j].split('/')[-1]}  rms = {rms_val} nm")
 
@@ -122,12 +103,11 @@ temp = min(rms_dict.values())
 res = [key for key in rms_dict if rms_dict[key] == temp]
 print("Keys with minimum values are : " + str(res))
 
-'''
+
 import nds2
 from sammie.data import padded_ground_motion, fetch_timeseries_data
 import matplotlib.pyplot as plt
 
-#conn = nds2.connection('nds.ligo-la.caltech.edu',31200)
 start_time = int(config.get('current_run','gpstime'))
 averages = int(config.get('current_run','averages'))
 coherence_overlap = float(config.get('current_run','coherence_overlap'))
@@ -164,10 +144,7 @@ plt.loglog(f,new, label="product")
 #plt.loglog(asd_a.frequencies, asd_a_corrected, label=f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ")
 plt.loglog(asd_gs13.frequencies[1:], asd_gs13_corrected, label=f"L1:ISI-{ham}_BLND_GS13{dof}_IN1_DQ")
 plt.loglog(asd_t240.frequencies[1:], asd_t240_corrected, label=f"L1:ISI-{ham}_BLND_T240{dof}_IN1_DQ")
-'''
-_, n_gs13 = sensor_noise_gs13(f)
-plt.loglog(f,n_seis, label="N_seis")
-plt.loglog(f, n_gs13, label="GS 13")
+
 plt.legend(prop={'size': 6})
 plt.show()
 

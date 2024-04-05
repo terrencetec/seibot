@@ -84,6 +84,7 @@ def frequency_minima_scipy_groundmotion(data_A, data_B, asd_dis_a, asd_dis_b):
 
 
 def pad_asd(asd_a, asd_b, cutoff_freq):
+    start_freq = asd_a.f0
     loc_cutoff = np.where((asd_a.frequencies.value == cutoff_freq))[0][0]
     pad_value_a = asd_a.value[loc_cutoff]
     pad_value_b = asd_b.value[loc_cutoff]
@@ -93,8 +94,8 @@ def pad_asd(asd_a, asd_b, cutoff_freq):
     data_b[0:loc_cutoff] = pad_value_b 
     asd_a.append(data_a, resize=False)
     asd_b.append(data_b, resize=False)
-    asd_a.f0 = 0 
-    asd_b.f0 = 0
+    asd_a.f0 = start_freq
+    asd_b.f0 = start_freq
 
     return asd_a, asd_b
 
@@ -115,27 +116,28 @@ def padded_ground_motion(gpstime, dof):
 
     asd_a = ITMX_data.asd(fftlength=fftlen,overlap=coherence_overlap)
     asd_b = ITMY_data.asd(fftlength=fftlen,overlap=coherence_overlap)
+    
+    asd_a_nonzero = asd_a[1:]
+    asd_b_nonzero = asd_b[1:]
+    asd_dis_a = FrequencySeries(data=asd_a_nonzero.value/(2*np.pi*asd_a_nonzero.frequencies), 
+                                f0=asd_a_nonzero.f0, 
+                                df=asd_a_nonzero.df, 
+                                name=asd_a_nonzero.name, 
+                                epoch=asd_a_nonzero.epoch, 
+                                channel=asd_a_nonzero.channel)
 
-    asd_dis_a = FrequencySeries(data=asd_a.value/(2*np.pi*asd_a.frequencies), 
-                                f0=asd_a.f0, 
-                                df=asd_a.df, 
-                                name=asd_a.name, 
-                                epoch=asd_a.epoch, 
-                                channel=asd_a.channel)
-
-    asd_dis_b = FrequencySeries(data=asd_b.value/(2*np.pi*asd_b.frequencies), 
-                                f0=asd_b.f0, 
-                                df=asd_b.df, 
-                                name=asd_b.name, 
-                                epoch=asd_b.epoch, 
-                                channel=asd_b.channel)
-
+    asd_dis_b = FrequencySeries(data=asd_b_nonzero.value/(2*np.pi*asd_b_nonzero.frequencies), 
+                                f0=asd_b_nonzero.f0, 
+                                df=asd_b_nonzero.df, 
+                                name=asd_b_nonzero.name, 
+                                epoch=asd_b_nonzero.epoch, 
+                                channel=asd_b_nonzero.channel)
     displacement_asd = asd_dis_a.copy()
     cutoff_freq= frequency_minima_scipy_groundmotion(ITMX_data, ITMY_data, asd_dis_a, asd_dis_b)
     _,n_sei = conditional_n_sei(cutoff_freq, noise_model, asd_dis_a)
     padded_asd_a, padded_asd_b = pad_asd(asd_dis_a, asd_dis_b, cutoff_freq)
 
-    
+    print(padded_asd_a)
 
     return padded_asd_a.frequencies.value, padded_asd_a.value, displacement_asd.value, n_sei
 
@@ -145,9 +147,9 @@ def conditional_n_sei(cutoff, noise_model, disp_asd):
     x = disp_asd.frequencies.value[lower:upper]
     y = disp_asd.value[lower:upper]
     param, _ = curve_fit(noise_model, x, y)
-    n_sei = noise_model(disp_asd.frequencies.value[1:], a=param[0], na=param[1])
+    n_sei = noise_model(disp_asd.frequencies.value, a=param[0], na=param[1])
 
-    return disp_asd.frequencies.value[1:], n_sei
+    return disp_asd.frequencies.value, n_sei
 
 def conditional_n_sei_vishack(f, cutoff, noise_model, disp_asd):
     upper = cutoff
