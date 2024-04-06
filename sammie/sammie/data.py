@@ -114,8 +114,8 @@ def padded_ground_motion(gpstime, dof):
     ITMY_data = fetch_timeseries_data(f'L1:ISI-GND_STS_ITMY_{dof}_DQ',
                                     start_time, end_time, mode='cdsutils')
 
-    asd_a = ITMX_data.asd(fftlength=fftlen,overlap=coherence_overlap)
-    asd_b = ITMY_data.asd(fftlength=fftlen,overlap=coherence_overlap)
+    asd_a = ITMY_data.asd(fftlength=fftlen,overlap=coherence_overlap)
+    asd_b = ITMX_data.asd(fftlength=fftlen,overlap=coherence_overlap)
     
     asd_a_nonzero = asd_a[1:]
     asd_b_nonzero = asd_b[1:]
@@ -133,7 +133,7 @@ def padded_ground_motion(gpstime, dof):
                                 epoch=asd_b_nonzero.epoch, 
                                 channel=asd_b_nonzero.channel)
     displacement_asd = asd_dis_a.copy()
-    cutoff_freq= frequency_minima_scipy_groundmotion(ITMX_data, ITMY_data, asd_dis_a, asd_dis_b)
+    cutoff_freq= frequency_minima_scipy_groundmotion(ITMY_data, ITMX_data, asd_dis_a, asd_dis_b)
     _,n_sei = conditional_n_sei(cutoff_freq, noise_model, asd_dis_a)
     padded_asd_a, padded_asd_b = pad_asd(asd_dis_a, asd_dis_b, cutoff_freq)
 

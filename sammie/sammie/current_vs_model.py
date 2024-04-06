@@ -41,7 +41,7 @@ function_dict = {
 
 }
 
-
+unity = complex(0,1)
 start_time = int(config.get('current_run','gpstime'))
 averages = int(config.get('current_run','averages'))
 coherence_overlap = float(config.get('current_run','coherence_overlap'))
@@ -78,16 +78,14 @@ start_time = int(config.get('current_run','gpstime'))
 
 start_time = int(config.get('current_run','gpstime'))
 _, pg = function_dict[f'{ham}_{dof}_trans']()
-f, xg, no_pad, n_seis = padded_ground_motion(start_time,dof)
 
 def predict_motion(ham, dof, h_sc, h1, h2, f):
+    f, xg, no_pad, n_seis = padded_ground_motion(start_time,dof)
     _, pg = function_dict[f'{ham}_{dof}_trans']()
     k = -iso(ham, dof)
     _,p = function_dict[f'{ham}_{dof}_plant']()
-
+    d = abs(pg(unity*2*np.pi*f))*xg
     kp = k * p
-    d = abs(pg(1j*2*np.pi*f)) * xg
-
     _, n_cps = sensor_noise_cps_xy(f)
     _, n_gs13 = sensor_noise_gs13(f)
 
@@ -102,6 +100,7 @@ h1, h2 = blend(ham, dof)
 f, x = predict_motion(ham, dof, h_sc, h1, h2, f)
 rms_dict = {}
 
+
 bandwidth  = float(config.get('current_run','bandwidth'))
 rms_val = kontrol.core.spectral.asd2rms(x[1:]*2*np.pi*f[1:], df=bandwidth, return_series=False)
 rms_dict['current'] = rms_val 
@@ -109,41 +108,41 @@ plt.loglog(f, x, label=f"ISI {dof} motion default rms = {rms_val} nm/s")
 rms_val =kontrol.core.spectral.asd2rms(xg[1:]*2*np.pi*f[1:], df=bandwidth, return_series=False)
 rms_dict['ground_motion'] = rms_val 
 plt.loglog(f, no_pad, label=f"ground displacement rms = {rms_val} nm/s")
+plt.loglog(f,n_seis,label="Seismometer noise")
+
+with open("output.json") as f:
+    out = json.load(f)
+
+out_fil = out['best'].split('+')
+
+
+hsc_string = out_fil[0].replace(' ','')
+h1_string = out_fil[-1].replace(' ','')
+h2_string = h1_string.replace('h1','h2')
 
 hsc_prefilt = kontrol.load_transfer_function("../etc/data/h_sc_prefilt.pkl")
 h2_prefilt = kontrol.load_transfer_function("../etc/data/h2_prefilter.pkl")
-sc_files = glob.glob("../etc/data/filter_bank/sensor_correction_bank/*.*")
-h1_files = glob.glob("../etc/data/filter_bank/h1_bank/*.*")
-h2_files = glob.glob("../etc/data/filter_bank/h2_bank/*.*")
+sc_files = f"../etc/data/filter_bank/sensor_correction_bank/{hsc_string}"
+h1_files = f"../etc/data/filter_bank/h1_bank/{h1_string}"
+h2_files = f"../etc/data/filter_bank/h2_bank/{h2_string}"
 
 
-for i in range(len(sc_files)): 
-    h_sc_hinf1 = kontrol.load_transfer_function(sc_files[i])
-    for j in range(len(h1_files)):
-        h1_hinf1 = kontrol.load_transfer_function(h1_files[j])
-        h2_hinf1 = kontrol.load_transfer_function(h2_files[j])
 
-        f_1,x_1 = predict_motion(ham, dof, h_sc_hinf1*hsc_prefilt, (1- h2_hinf1*h2_prefilt), h2_hinf1*h2_prefilt, f)
-        new = 1- h_sc_hinf1*hsc_prefilt
-        rms_val = kontrol.core.spectral.asd2rms(x_1*2*np.pi*f_1, df=bandwidth, return_series=False)
-        print(rms_val)
-        plt.loglog(f_1, x_1, label=f"ISI {dof} motion filter {sc_files[i].split('/')[-1]} + {h1_files[j].split('/')[-1]}  rms = {rms_val} nm")
+h_sc_hinf1 = kontrol.load_transfer_function(sc_files)
 
-        print(f"{sc_files[i].split('/')[-1]} + {h1_files[j].split('/')[-1]}")
-        rms_dict[f"{sc_files[i].split('/')[-1]} + {h1_files[j].split('/')[-1]}"] = rms_val 
+h1_hinf1 = kontrol.load_transfer_function(h1_files)
+h2_hinf1 = kontrol.load_transfer_function(h2_files)
 
-temp = min(rms_dict.values())
-res = [key for key in rms_dict if rms_dict[key] == temp]
-print(res)
-print(res[0])
-print("Keys with minimum values are : " + str(res[0]))
+f_1,x_1 = predict_motion(ham, dof, h_sc_hinf1*hsc_prefilt, (1- h2_hinf1*h2_prefilt), h2_hinf1*h2_prefilt, f)
+new = 1- h_sc_hinf1*hsc_prefilt
+rms_val = kontrol.core.spectral.asd2rms(x_1*2*np.pi*f_1, df=bandwidth, return_series=False)
+print(rms_val)
+plt.loglog(f_1, x_1, label=f"ISI {dof} motion filter {sc_files.split('/')[-1]} + {h1_files.split('/')[-1]}  rms = {rms_val} nm")
 
-output = {}
-output['best'] = str(res[0])
-with open("output.json","w") as f:
-    json.dump(output,f)
+print(f"{sc_files.split('/')[-1]} + {h1_files.split('/')[-1]}")
+rms_dict[f"{sc_files.split('/')[-1]} + {h1_files.split('/')[-1]}"] = rms_val 
 
 
-plt.legend(prop={'size': 6})
+plt.legend(prop={'size': 15})
 plt.show()
 
