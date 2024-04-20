@@ -94,97 +94,10 @@ _, pg = function_dict[f"{ham}_{dof}_trans"]()
 f, xg, no_pad, n_seis = padded_ground_motion(start_time, dof)
 
 
-def predict_motion(ham, dof, h_sc, h1, h2, f):
-    _, pg = function_dict[f"{ham}_{dof}_trans"]()
-    k = -iso(ham, dof)
-    _, p = function_dict[f"{ham}_{dof}_plant"]()
-
-    kp = k * p
-    d = abs(pg(1j * 2 * np.pi * f)) * xg
-
-    _, n_cps = sensor_noise_cps_xy(f)
-    _, n_gs13 = sensor_noise_gs13(f)
-
-    n_sc = kontrol.core.math.quad_sum(
-        n_cps,
-        abs(h_sc(1j * 2 * np.pi * f)) * n_seis,
-        abs((1 - h_sc)(1j * 2 * np.pi * f)) * xg,
-    )
-    n = kontrol.core.math.quad_sum(
-        abs(h1(1j * 2 * np.pi * f)) * n_sc, abs(h2(1j * 2 * np.pi * f)) * n_gs13
-    )
-    x = kontrol.core.math.quad_sum(
-        abs((1 / (1 + kp))(1j * 2 * np.pi * f)) * d,
-        abs((kp / (1 + kp))(1j * 2 * np.pi * f)) * n,
-    )
-    return f, x
+_, n_cps = sensor_noise_cps_xy(f)
+_, n_gs13 = sensor_noise_gs13(f)
 
 
-h_sc = sens_cor(ham, dof)
-h1, h2 = blend(ham, dof)
-f, x = predict_motion(ham, dof, h_sc, h1, h2, f)
-rms_dict = {}
-
-bandwidth = float(config.get("current_run", "bandwidth"))
-rms_val = kontrol.core.spectral.asd2rms(
-    x[1:] * 2 * np.pi * f[1:], df=bandwidth, return_series=False
-)
-rms_dict["current"] = rms_val
-plt.loglog(f, x, label=f"ISI {dof} motion default rms = {rms_val} nm/s")
-rms_val = kontrol.core.spectral.asd2rms(
-    xg[1:] * 2 * np.pi * f[1:], df=bandwidth, return_series=False
-)
-rms_dict["ground_motion"] = rms_val
-plt.loglog(f, no_pad, label=f"ground displacement rms = {rms_val} nm/s")
-
-hsc_prefilt = kontrol.load_transfer_function("../etc/data/h_sc_prefilt.pkl")
-h2_prefilt = kontrol.load_transfer_function("../etc/data/h2_prefilter.pkl")
-sc_files = glob.glob("../etc/data/filter_bank/sensor_correction_bank/*.*")
-h1_files = glob.glob("../etc/data/filter_bank/h1_bank/*.*")
-h2_files = glob.glob("../etc/data/filter_bank/h2_bank/*.*")
-
-
-for i in range(len(sc_files)):
-    h_sc_hinf1 = kontrol.load_transfer_function(sc_files[i])
-    for j in range(len(h1_files)):
-        h1_hinf1 = kontrol.load_transfer_function(h1_files[j])
-        h2_hinf1 = kontrol.load_transfer_function(h2_files[j])
-
-        f_1, x_1 = predict_motion(
-            ham,
-            dof,
-            h_sc_hinf1 * hsc_prefilt,
-            (1 - h2_hinf1 * h2_prefilt),
-            h2_hinf1 * h2_prefilt,
-            f,
-        )
-        new = 1 - h_sc_hinf1 * hsc_prefilt
-        rms_val = kontrol.core.spectral.asd2rms(
-            x_1 * 2 * np.pi * f_1, df=bandwidth, return_series=False
-        )
-        print(rms_val)
-        plt.loglog(
-            f_1,
-            x_1,
-            label=f"ISI {dof} motion filter {sc_files[i].split('/')[-1]} + {h1_files[j].split('/')[-1]}  rms = {rms_val} nm",
-        )
-
-        print(f"{sc_files[i].split('/')[-1]} + {h1_files[j].split('/')[-1]}")
-        rms_dict[
-            f"{sc_files[i].split('/')[-1]} + {h1_files[j].split('/')[-1]}"
-        ] = rms_val
-
-temp = min(rms_dict.values())
-res = [key for key in rms_dict if rms_dict[key] == temp]
-print(res)
-print(res[0])
-print("Keys with minimum values are : " + str(res[0]))
-
-output = {}
-output["best"] = str(res[0])
-with open("output.json", "w") as f:
-    json.dump(output, f)
-
-
+plt.loglog(f, n_gs13)
 plt.legend(prop={"size": 6})
 plt.show()
