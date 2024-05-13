@@ -1,0 +1,19 @@
+[project]
+name = "seibot"
+version = "0.0.0"
+authors = [
+  {name="Terrence Tsang", email="terrencetec@gmail.com"},
+	{name="Sushant Sharma-Chaudhary", email="sushant.sharma-chaudhary@ligo.org"}
+]
+description = "Semi-adaptive seismic isolation control framework for LIGO"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/terrencetec/seibot"
+Issues = "https://github.com/terrencetec/seibot/issues"
