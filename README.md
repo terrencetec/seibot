@@ -7,9 +7,13 @@ Clone repository
 git clone https://github.com/terrencetec/seibot.git
 ```
 
-Change directory and pip install
+Change directory
 ```
 cd seibot
+```
+
+Install using `pip`
+```
 pip install .
 ```
 
