@@ -139,13 +139,10 @@ def frequency_minima_scipy_groundmotion(data_A, data_B, asd_dis_a):
     # find the point where there is max coherence
     rounded_coh = np.round(coh, 2)
     first_one_coh = np.min(np.where(rounded_coh == 1.00))
-
-    # from that frequency position to 0 make freq-bins of given width and check for 
-    # coherence difference in each bin
-    check_array = np.arange(first_one_coh, 0, -5)
-    min_asd = np.min(asd_dis_a.value[0:first_one_coh])
-    last_one_coh = np.max(np.where(asd_dis_a.value[0:first_one_coh] == min_asd))
-    frequency = asd_dis_a.frequencies[last_one_coh]
+    last_half_coh = np.max(np.where((rounded_coh[0:first_one_coh] - 0.5) < 0.01))
+    min_vals = argrelextrema(asd_dis_a.value[0:first_one_coh], np.less)[0]
+    closest_val = np.min(np.where(np.abs(min_vals - last_half_coh) < 5))
+    frequency = asd_dis_a.frequencies[min_vals[closest_val]]
     return frequency.value
 
 
