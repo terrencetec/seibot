@@ -52,7 +52,7 @@ def plot_asd_coherence(data_A, data_B, start_times, cutoff_freq=None):
     ax2.set_title("Coherence")
     if cutoff_freq:
         ax2.axvline(cutoff_freq, c='r')
-    plt.savefig(f"../temp_analysis/asd_coh_cutoff_{str(start_times)}.png", dpi=300)
+    plt.show()
 
 
 def plot_padded_asd(asd_a, asd_b, cutoff_freq):
@@ -109,13 +109,13 @@ def padded_ground_motion(gpstime, dof):
     coherence_overlap = float(config.get('current_run','coherence_overlap'))
     fftlen = int(config.get('current_run','coherence_fftlen'))
     end_time = start_time + (averages*coherence_overlap +1)*fftlen
-    ITMX_data = fetch_timeseries_data(f'L1:ISI-GND_STS_ITMX_{dof}_DQ',
+    ITMX_data = fetch_timeseries_data(f'L1:ISI-GND_STS_HAM8_{dof}_DQ',
                                     start_time, end_time, mode='cdsutils')
     ITMY_data = fetch_timeseries_data(f'L1:ISI-GND_STS_ITMY_{dof}_DQ',
                                     start_time, end_time, mode='cdsutils')
 
-    asd_a = ITMY_data.asd(fftlength=fftlen,overlap=coherence_overlap)
-    asd_b = ITMX_data.asd(fftlength=fftlen,overlap=coherence_overlap)
+    asd_a = ITMX_data.asd(fftlength=fftlen,overlap=coherence_overlap)
+    asd_b = ITMY_data.asd(fftlength=fftlen,overlap=coherence_overlap)
     
     asd_a_nonzero = asd_a[1:]
     asd_b_nonzero = asd_b[1:]
