@@ -260,8 +260,7 @@ class Data:
         fs = time_series.sample_rate
 
         # Welch
-        f, psd = self.ts2asd(ts=ts, fs=fs, nperseg=nperseg)
-        asd = psd**.5
+        f, asd = self.ts2asd(ts=ts, fs=fs, nperseg=nperseg)
 
         # Filters out 0 Hz
         if not return_zero_frequency:
