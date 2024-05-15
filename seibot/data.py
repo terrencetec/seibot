@@ -134,7 +134,6 @@ class Data:
         param : array
             The parameters for the model.
         """
-        print(type(f))
         model = self._seismometer_noise_model
         param, _ = scipy.optimize.curve_fit(model,
                                             xdata=f,
@@ -174,7 +173,10 @@ class Data:
         na : float
             Noise level at 1 Hz.
         """
+        print(type(f))
+        print(f)
         noise = na / f**a
+        
         
         return noise
 
