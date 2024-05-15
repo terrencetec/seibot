@@ -4,7 +4,7 @@ import configparser
 
 import cdsutils
 import numpy as np
-import scipy
+import scipy.optimize
 
 
 class Data:
@@ -47,20 +47,22 @@ class Data:
                                  channel2=seismometer_coh_chan)
 
         # v TODO Warning: hardcode calibration
-        seismoc_asd *= 1/(2*np.pi*f) * 1e-9  # to displacement in meters
+        seismic_asd *= 1/(2*np.pi*f) * 1e-9  # to displacement in meters
 
-        seismic_asd = self.pad_seismic_noise(seismic_asd coherence)
+        seismic_asd = self.pad_seismic_noise(seismic_asd, coherence)
 
         return f, seismic_asd
 
-    def get_seismometer_noise(self, adaptive=True):
+    def get_seismometer_noise(self, dynamic=True):
         """ Fetch and process seismometer data to get seismometer noise
 
         Parameters
         ----------
-        adaptive : Bool
-            Estimate real-time seismometer noise
-        
+        dynamic : bool, optional 
+            Estimate real-time seismometer noise.
+            If false, Or get it from the data base.
+            Defaults True.
+
         Returns
         -------
         f : array
@@ -68,7 +70,74 @@ class Data:
         seismometer_noise : array
             Amplitude spectral density of the seismometer noise.
         """
-        pass
+        seismometer_chan = self.config.get("Channels", "seismometer")
+        seismometer_coh_chan = self.config.get("Channels", "seismometer_coh")
+        f, seismic_asd = self.get_asd(channel=seismometer_chan)
+        _, seismic_coh_asd = self.get_asd(channel=seismometer_coh_chan)
+        _, coherence = self.get_coh(channel1=seismometer_chan,
+                                 channel2=seismometer_coh_chan)
+
+        # v TODO Warning: hardcode calibration
+        seismic_asd *= 1/(2*np.pi*f) * 1e-9  # to displacement in meters
+        
+        cutoff_i = self._get_seismometer_cutoff(seismic_asd, coherence)
+        # v Hardcode 0.01 
+        f_mask = (f>0.01) * (f<f[cutoff])
+        seismometer_noise = seismic_asd[f_mask]
+        
+        # Fit
+        param = self.fit_seismometer_noise(f[f_mask], seismometer_noise)
+
+        seismometer_asd = self._seismometer_noise_model(f, *param)
+        
+        return f, seismometer_asd
+
+    def _get_seismometer_cutoff(self, seismic_asd, coherence):
+        """Get the index in seismic_asd that divides noise and signal
+
+        Parameters
+        ----------
+        seismic_asd : array
+            Amplitude spectral density of the seismic noise readout
+        coherence : array
+            The coherence between the seismic noise readout and another
+            seismic noise readout.
+
+        Returns
+        -------
+        cutoff_i : int
+            The cutoff index.
+        """
+        # v This is effectively setting a coherence threshold
+        rounded_coh = np.round(coherence, 2)
+        coh_one_i = np.min(np.where(rounded_coh == 1.00))  # When coh becomes 1
+        # ^ This is effectively settting a coherence threshold
+
+        min_asd_i = np.max(np.argmin(seismic_asd[:coh_one_i]))
+        cutoff_i = min_asd_i
+
+        return cutoff_i
+
+    def fit_seismometer_noise(self, f, seismometer_noise):
+        """Fit seismometer noise using an internal model.
+        
+        Parameters
+        ----------
+        f : array
+            Frequency array.
+        seismometer_noise : array
+            The amplitude spectral density of the seismometer noise.
+
+        Returns
+        -------
+        param : array
+            The parameters for the model.
+        """
+        model = self._seismometer_noise_model
+        param, _ = scipy.optimize.curve_fit(model,
+                                            xdata=f,
+                                            ydata=seismometer_asd)
+        return param
 
     def pad_seismic_noise(self, seismic_asd, coherence):
         """Edge-pad seismometer noise from seismic noise readout
@@ -86,10 +155,8 @@ class Data:
         seismic_asd : array
             The padded seismic noise amplitude spectral density
         """
-        rounded_coh = np.round(coherence, 2)
-        coh_one_i = np.min(np.where(rounded_coh == 1.00))  # When coh becomes 1
-        min_asd_i = np.max(np.argmin(seismic_asd[:coh_one_i]))
-        seismic_asd[:min_asd_i] = seismic_asd[min_asd_i]
+        cutoff_i = self._get_seismometer_cutoff(seismic_asd, coherence)
+        seismic_asd[:cutoff] = seismic_asd[cutoff]  # Edge-pad noises.
         
         return seismic_asd
 
