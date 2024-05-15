@@ -19,6 +19,10 @@ dependencies = [
   "scipy",
 ] 
 
+[tool.setuptools]
+packages = ["seibot"]
+py-modules = ["__init__"]
+
 [project.urls]
 Homepage = "https://github.com/terrencetec/seibot"
 Issues = "https://github.com/terrencetec/seibot/issues"
