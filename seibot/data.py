@@ -176,13 +176,19 @@ class Data:
         
         return noise
 
-    def fetch(self, channel, duration):
+    def fetch(self, channel, duration, start=None):
         """ Fetch data given channel names
 
         Parameters
         ----------
         channel : str
             Channel name.
+        duration : float
+            Length of the data segment in seconds.
+        start : float, optional
+            Start time of the data, in GPS time.
+            If not specified, start now.
+            Defaults None.
 
         Returns
         -------
@@ -190,6 +196,7 @@ class Data:
             The time series.
         """
         time_series = cdsutils.getdata(channel, duration=duration)
+
         return time_series
 
     def ts2asd(self, ts, fs, nperseg=None):
