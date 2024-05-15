@@ -195,7 +195,7 @@ class Data:
         time_series : cdsutils.TimeSeries
             The time series.
         """
-        time_series = cdsutils.getdata(channel, duration=duration)
+        time_series = cdsutils.getdata(channel, duration=duration, start=start)
 
         return time_series
 
@@ -246,11 +246,11 @@ class Data:
             The amplitude spectral density
         """
         # CDSutils setup
-        duration = self.config.get("CDSutils", "duration")
-        start = self.config.get("CDSutils", "start")
+        duration = self.config.getfloat("CDSutils", "duration")
+        start = self.config.getfloat("CDSutils", "start")
         
         # scipy.signal.welch setup
-        nperseg = self.config.get("Welch", "nperseg")
+        nperseg = self.config.getint("Welch", "nperseg")
 
         # Get spectrum
         time_series = self.fetch(channel, duration=duration, start=start)
