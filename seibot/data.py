@@ -157,7 +157,7 @@ class Data:
             The padded seismic noise amplitude spectral density
         """
         cutoff_i = self._get_seismometer_cutoff(seismic_asd, coherence)
-        seismic_asd[:cutoff] = seismic_asd[cutoff]  # Edge-pad noises.
+        seismic_asd[:cutoff_i] = seismic_asd[cutoff_i]  # Edge-pad noises.
         
         return seismic_asd
 
