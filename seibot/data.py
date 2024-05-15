@@ -83,7 +83,7 @@ class Data:
         
         cutoff_i = self._get_seismometer_cutoff(seismic_asd, coherence)
         # v Hardcode 0.01 
-        f_mask = (f>0.01) * (f<f[cutoff])
+        f_mask = (f>0.01) * (f<f[cutoff_i])
         seismometer_noise = seismic_asd[f_mask]
         
         # Fit
