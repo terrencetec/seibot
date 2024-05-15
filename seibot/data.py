@@ -161,7 +161,7 @@ class Data:
         
         return seismic_asd
 
-    def _seismometer_noise_model(f, a, na):
+    def _seismometer_noise_model(self, f, a, na):
         """Seismometer noise model
         
         Parameters
@@ -173,10 +173,7 @@ class Data:
         na : float
             Noise level at 1 Hz.
         """
-        print(type(f))
-        print(f)
         noise = na / f**a
-        
         
         return noise
 
