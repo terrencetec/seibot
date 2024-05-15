@@ -134,6 +134,7 @@ class Data:
         param : array
             The parameters for the model.
         """
+        print(type(f))
         model = self._seismometer_noise_model
         param, _ = scipy.optimize.curve_fit(model,
                                             xdata=f,
