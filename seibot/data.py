@@ -298,7 +298,7 @@ class Data:
 
         # Get spectrum
         time_series1 = self.fetch(channel1, duration=duration, start=start)
-        time_Series2 = self.fetch(channel2, duration=duration, start=start)
+        time_series2 = self.fetch(channel2, duration=duration, start=start)
 
         ts1 = time_series1.data
         ts2 = time_series2.data
