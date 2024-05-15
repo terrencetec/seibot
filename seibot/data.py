@@ -4,6 +4,7 @@ import configparser
 
 import cdsutils
 import numpy as np
+import scipy
 import scipy.optimize
 
 
