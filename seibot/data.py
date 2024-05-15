@@ -137,7 +137,7 @@ class Data:
         model = self._seismometer_noise_model
         param, _ = scipy.optimize.curve_fit(model,
                                             xdata=f,
-                                            ydata=seismometer_asd)
+                                            ydata=seismometer_noise)
         return param
 
     def pad_seismic_noise(self, seismic_asd, coherence):
