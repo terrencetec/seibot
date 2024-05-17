@@ -53,3 +53,27 @@ class Model:
         noise = ((na/f**a)**2 + (nb/f**b)**2)**.5
 
         return noise
+
+    def second_order_plant(self, f, wn, q, dcgain):
+        """Second order transfer function
+
+        Parameters
+        ----------
+        f : array
+            Frequency axis.
+        wn : float
+            Resonance frequency in rad/s.
+        q : float
+            Q factor.
+        dcgain : float
+            The DC gain of the transfer function.
+
+        Returns
+        -------
+        freq_resp : array
+            Frequency response of the plant
+        """
+        s = 1j*2*np.pi*f
+        freq_resp = dcgain * wn**2 / (s**2 + wn/q*s + wn**2)
+
+        return freq_resp
