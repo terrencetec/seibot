@@ -25,6 +25,15 @@ class Data:
         self.config.optionxform = str
         self.config.read(path_config)
 
+        # Initiallize dummy frequency axis:
+        fs = 512
+        duration = self.config.getfloat("CDSutils", "duration")
+        n_data = int(fs * duration)
+        data = np.random.normal(loc=0, scale=1, size=n_data)
+        nperseg = self.config.getint("Welch", "nperseg")
+        f, _ = scipy.signal.welch(data, fs=fs, nperseg=nperseg)
+        self.f = f
+
         # CDSutils options
         # start = config.read("CDSutils", "start")
         # duration = config.read("CDSutils", "duration")
@@ -54,15 +63,8 @@ class Data:
 
         return f, seismic_asd
 
-    def get_seismometer_noise(self, dynamic=True):
+    def get_seismometer_noise(self):
         """ Fetch and process seismometer data to get seismometer noise
-
-        Parameters
-        ----------
-        dynamic : bool, optional 
-            Estimate real-time seismometer noise.
-            If false, Or get it from the data base.
-            Defaults True.
 
         Returns
         -------
@@ -71,25 +73,35 @@ class Data:
         seismometer_noise : array
             Amplitude spectral density of the seismometer noise.
         """
-        seismometer_chan = self.config.get("Channels", "seismometer")
-        seismometer_coh_chan = self.config.get("Channels", "seismometer_coh")
-        f, seismic_asd = self.get_asd(channel=seismometer_chan)
-        _, seismic_coh_asd = self.get_asd(channel=seismometer_coh_chan)
-        _, coherence = self.get_coh(channel1=seismometer_chan,
-                                 channel2=seismometer_coh_chan)
+        dynamic = self.config.getboolean("Seismometer", "dynamic")
+        if dynamic:
+            seismometer_chan = self.config.get("Channels", "seismometer")
+            seismometer_coh_chan = self.config.get("Channels", "seismometer_coh")
+            f, seismic_asd = self.get_asd(channel=seismometer_chan)
+            _, seismic_coh_asd = self.get_asd(channel=seismometer_coh_chan)
+            _, coherence = self.get_coh(channel1=seismometer_chan,
+                                     channel2=seismometer_coh_chan)
 
-        # v TODO Warning: hardcode calibration
-        seismic_asd *= 1/(2*np.pi*f) * 1e-9  # to displacement in meters
-        
-        cutoff_i = self._get_seismometer_cutoff(seismic_asd, coherence)
-        # v Hardcode 0.01 
-        f_mask = (f>0.01) * (f<f[cutoff_i])
-        seismometer_noise = seismic_asd[f_mask]
-        
-        # Fit
-        param = self.fit_seismometer_noise(f[f_mask], seismometer_noise)
+            # v TODO Warning: hardcode calibration
+            seismic_asd *= 1/(2*np.pi*f) * 1e-9  # to displacement in meters
+            
+            cutoff_i = self._get_seismometer_cutoff(seismic_asd, coherence)
+            # v Hardcode 0.01 
+            f_mask = (f>0.01) * (f<f[cutoff_i])
+            seismometer_noise = seismic_asd[f_mask]
+            
+            # Fit
+            param = self.fit_seismometer_noise(f[f_mask], seismometer_noise)
 
-        seismometer_asd = self._seismometer_noise_model(f, *param)
+            seismometer_asd = self._seismometer_noise_model(f, *param)
+        else:
+            model_method = self.config.getboolean("Seismometer", "model")
+            path_parameters = self.config.get("Seismometer", "path_parameters")
+            parameters = np.loadtxt(path_parameters)
+            seibot_model = seibot.model.Model()
+            model = getattr(seibot_model, model_method)
+            seismometer_asd = model(self.f, *parameters)
+            f = self.f
         
         return f, seismometer_asd
 
