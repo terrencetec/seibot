@@ -248,7 +248,7 @@ class Data:
         """
         # CDSutils setup
         duration = self.config.getfloat("CDSutils", "duration")
-        start = self.config.getfloat("CDSutils", "start")
+        start = self.config.getfloat("CDSutils", "start", fallback=None)
         
         # scipy.signal.welch setup
         nperseg = self.config.getint("Welch", "nperseg")
@@ -290,8 +290,9 @@ class Data:
             The amplitude spectral density
         """
         # CDSutils setup
+        # v Replace this with properties.
         duration = self.config.getfloat("CDSutils", "duration")
-        start = self.config.getfloat("CDSutils", "start")
+        start = self.config.getfloat("CDSutils", "start", fallback=None)
         
         # scipy.signal.welch setup
         nperseg = self.config.getint("Welch", "nperseg")
