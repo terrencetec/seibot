@@ -7,6 +7,8 @@ import numpy as np
 import scipy
 import scipy.optimize
 
+import seibot.model
+
 
 class Data:
     """SeiBot Data class
@@ -26,17 +28,148 @@ class Data:
         self.config.read(path_config)
 
         # Initiallize dummy frequency axis:
-        fs = 512
         duration = self.config.getfloat("CDSutils", "duration")
+        nperseg = self.config.getint("Welch", "nperseg")
+        fs = self.config.getfloat("Welch", "fs")
         n_data = int(fs * duration)
         data = np.random.normal(loc=0, scale=1, size=n_data)
-        nperseg = self.config.getint("Welch", "nperseg")
         f, _ = scipy.signal.welch(data, fs=fs, nperseg=nperseg)
+        f = f[1:]  # Remove DC
         self.f = f
 
-        # CDSutils options
-        # start = config.read("CDSutils", "start")
-        # duration = config.read("CDSutils", "duration")
+        # Initialize attributes
+        _, self.seismic_noise = self.get_seismic_noise()
+        _, self.seismometer_noise = self.get_seismometer_noise()
+        _, self.inertial_sensor_noise = self.get_inertial_sensor_noise()
+        _, self.relative_sensor_noise = self.get_relative_sensor_noise()
+        _, self.plant = self.get_plant()
+        _, self.transmissivity = self.get_transmissivity()
+        
+    @property
+    def f(self):
+        """Frequency array"""
+        return self._f
+
+    @f.setter
+    def f(self, _f):
+        """Frequency array setter"""
+        self._f = _f
+
+    @property
+    def seismic_noise(self):
+        """Seismic noise"""
+        return self._seismic_noise
+
+    @seismic_noise.setter
+    def seismic_noise(self, _seismic_noise):
+        """Seismic noise setter"""
+        self._seismic_noise = _seismic_noise
+
+    @property
+    def seismometer_noise(self):
+        """Seismometer noise"""
+        return self._seismometer_noise
+
+    @seismometer_noise.setter
+    def seismometer_noise(self, _seismometer_noise):
+        """Seismometer noise setter"""
+        self._seismometer_noise = _seismometer_noise
+
+    @property
+    def inertial_sensor_noise(self):
+        """Inertial sensor noise"""
+        return self._inertial_sensor_noise
+
+    @inertial_sensor_noise.setter
+    def inertial_sensor_noise(self, _inertial_sensor_noise):
+        """Inertial sensor noise setter"""
+        self._inertial_sensor_noise = _inertial_sensor_noise
+
+    @property
+    def relative_sensor_noise(self):
+        """Relative sensor noise"""
+        return self._relative_sensor_noise
+    
+    @relative_sensor_noise.setter
+    def relative_sensor_noise(self, _relative_sensor_noise):
+        """Relative sensor noise setter"""
+        self._relative_sensor_noise = _relative_sensor_noise
+
+    @property
+    def plant(self):
+        """Plant"""
+        return self._plant
+    
+    @plant.setter
+    def plant(self, _plant):
+        """Plant setter"""
+        self._plant = _plant
+
+    @property
+    def transmissivity(self):
+        """Transmissivity"""
+        return self._transmissivity
+    
+    @transmissivity.setter
+    def transmissivity(self, _transmissivity):
+        """Transmissivity setter"""
+        self._transmissivity = _transmissivity
+
+    def get_inertial_sensor_noise(self):
+        """Get inertial sensor noise
+        
+        Returns
+        -------
+        f : array
+            Frequency array.
+        inertial_asd : array
+            Amplitude spectral density of the inertial sensor noise.
+        """
+        f, inertial_asd = self.get_modeled("Inertial sensor")
+
+        return f, inertial_asd
+
+    def get_relative_sensor_noise(self):
+        """Get relative sensor noise
+        
+        Returns
+        -------
+        f : array
+            Frequency array.
+        relative_asd : array
+            Amplitude spectral density of the inertial sensor noise.
+        """
+        f, relative_asd = self.get_modeled("Relative sensor")
+
+        return f, relative_asd
+
+    def get_plant(self):
+        """Get plant
+
+        Returns
+        -------
+        f : array
+            Frequency array
+        plant : array
+            The frequency response of the plant.
+        """
+        f, plant = self.get_modeled("Plant")
+
+        return f, plant
+
+    def get_transmissivity(self):
+        """Get transmissivity
+        
+        Returns
+        -------
+        f : array
+            Frequency array
+        transmissivity : array
+            The frequency response of the transmissivity
+        """
+        f, transmissivity = self.get_modeled("Transmissivity")
+
+        return f, transmissivity
 
     def get_seismic_noise(self):
         """Fetch and process seismometer data to get seismic noise
@@ -48,18 +181,23 @@ class Data:
         seismic_asd : array
             Amplitude spectral density of the seismic noise.
         """
-        # Parse config
-        seismometer_chan = self.config.get("Channels", "seismometer")
-        seismometer_coh_chan = self.config.get("Channels", "seismometer_coh")
-        f, seismic_asd = self.get_asd(channel=seismometer_chan)
-        _, seismic_coh_asd = self.get_asd(channel=seismometer_coh_chan)
-        _, coherence = self.get_coh(channel1=seismometer_chan,
-                                 channel2=seismometer_coh_chan)
+        dynamic = self.config.getboolean("Seismic", "dynamic")
+        if dynamic:
+            # Parse config
+            seismometer_chan = self.config.get("Channels", "seismometer")
+            seismometer_coh_chan = self.config.get("Channels", "seismometer_coh")
+            f, seismic_asd = self.get_asd(channel=seismometer_chan)
+            _, seismic_coh_asd = self.get_asd(channel=seismometer_coh_chan)
+            _, coherence = self.get_coh(channel1=seismometer_chan,
+                                     channel2=seismometer_coh_chan)
 
-        # v TODO Warning: hardcode calibration
-        seismic_asd *= 1/(2*np.pi*f) * 1e-9  # to displacement in meters
+            # v TODO Warning: hardcode calibration
+            seismic_asd *= 1/(2*np.pi*f) * 1e-9  # to displacement in meters
 
-        seismic_asd = self.pad_seismic_noise(seismic_asd, coherence)
+            seismic_asd = self.pad_seismic_noise(seismic_asd, coherence)
+        else:
+            f, seismic_asd = self.get_modeled("Seismic")
+            seismic_asd = abs(seismic_asd)
 
         return f, seismic_asd
 
@@ -95,14 +233,8 @@ class Data:
 
             seismometer_asd = self._seismometer_noise_model(f, *param)
         else:
-            model_method = self.config.getboolean("Seismometer", "model")
-            path_parameters = self.config.get("Seismometer", "path_parameters")
-            parameters = np.loadtxt(path_parameters)
-            seibot_model = seibot.model.Model()
-            model = getattr(seibot_model, model_method)
-            seismometer_asd = model(self.f, *parameters)
-            f = self.f
-        
+            f, seismometer_asd = self.get_modeled("Seismometer")        
+
         return f, seismometer_asd
 
     def _get_seismometer_cutoff(self, seismic_asd, coherence):
@@ -173,21 +305,39 @@ class Data:
         
         return seismic_asd
 
-    def _seismometer_noise_model(self, f, a, na):
-        """Seismometer noise model
+    def get_modeled(self, instrument):
+        """Get modeled spectrum/frequency response
         
         Parameters
         ----------
+        instrument : str
+            Specify which model.
+            Choose from ["Seismometer", "Inertial sensor", "Relative sensor",
+            "Plant", "Transmissivity"].
+
+        Returns
+        -------
         f : array
             Frequency array.
-        a : float
-            Frequency exponent.
-        na : float
-            Noise level at 1 Hz.
+        frequency_series : array
+            The modeled frequency series.
         """
-        noise = na / f**a
+        # Parse config.
+        model_name = self.config.get(instrument, "model")
+        path_parameters = self.config.get(instrument, "parameters_path")
         
-        return noise
+        # Get model
+        model = seibot.model.Model()
+        model_method = getattr(model, model_name)
+
+        # Get parameters
+        parameters = np.loadtxt(path_parameters)
+
+        # Evaluate frequency series
+        f = self.f
+        frequency_series = model_method(f, *parameters)
+
+        return f, frequency_series
 
     def fetch(self, channel, duration, start=None):
         """ Fetch data given channel names

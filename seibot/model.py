@@ -1,5 +1,7 @@
 """Model Library
 """
+import numpy as np
+
 
 class Model:
     """Model class
