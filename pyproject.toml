@@ -15,6 +15,7 @@ classifiers = [
 ]
 dependencies = [
   "cdsutils",
+  "control",
   "numpy",
   "matplotlib",
   "scipy",
