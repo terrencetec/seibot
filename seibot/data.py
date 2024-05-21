@@ -441,6 +441,8 @@ class Data:
 
         # Get spectrum
         time_series = self.fetch(channel, duration=duration, start=start)
+        
+        # TODO resampling
 
         ts = time_series.data
         fs = time_series.sample_rate
