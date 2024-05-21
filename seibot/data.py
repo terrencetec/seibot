@@ -1,4 +1,4 @@
-"""SeiBot Data
+"""Seibot Data
 """
 import configparser
 
@@ -11,12 +11,29 @@ import seibot.model
 
 
 class Data:
-    """SeiBot Data class
+    """Seibot Data class
 
     Parameters
     ----------
     path_config : str
         Path of the configuration file.
+
+    Attributes
+    ----------
+    f : array
+        Frequency array.
+    seismic_noise : array
+        The amplitude spectral density of the seismic noise.
+    seismometer_noise : array
+        The amplitude spectral density of the seismometer noise.
+    inertial_sensor_noise : array
+        The amplitude spectral density of the inertial sensor noise.
+    relative_sensor_noise : array
+        The amplitude spectral density of the relative sensor noise.
+    plant : TransferFunction
+        The transfer function of the plant.
+    transmissivity : TransferFunction
+        The transfer function of the transmissivity.
     """
     def __init__(self, path_config):
         """Constructor
@@ -278,8 +295,15 @@ class Data:
         param : array
             The parameters for the model.
         """
-        model = self._seismometer_noise_model
-        param, _ = scipy.optimize.curve_fit(model,
+        # Parse
+        model_name = self.config.get("Seismometer", "model")
+        
+        # Get model
+        model = seibot.model.Model()
+        model_method = getattr(model, model_name)
+
+        # Fit
+        param, _ = scipy.optimize.curve_fit(model_method,
                                             xdata=f,
                                             ydata=seismometer_noise)
         return param
