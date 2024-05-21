@@ -48,11 +48,11 @@ function_dict = {
 start_time = int(config.get('current_run','gpstime'))
 f, pg = function_dict[f'{ham}_{dof}_trans']()
 f = f[1:]
-_, xg, no_pad, n_seis = padded_ground_motion(start_time,dof)
+_, xg, no_pad, n_seis, cutoff = padded_ground_motion(start_time,dof)
 
 
 _,p = function_dict[f'{ham}_{dof}_plant']()
-k = iso(ham, dof)
+k = -iso(ham, dof)
 kp = k * p
 
 d = abs(pg(1j*2*np.pi*f)) * xg
@@ -60,7 +60,7 @@ d = abs(pg(1j*2*np.pi*f)) * xg
 _, n_cps = sensor_noise_cps_xy(f)
 #_, n_seis = sensor_noise_sei(f)
 #_, n_gs13 = sensor_noise_gs13(f)
-n_gs13 = get_tilt_gs13()
+n_gs13 = get_tilt_gs13(cutoff)
 
 h_sc = sens_cor(ham, dof)
 h1, h2 = blend(ham, dof)

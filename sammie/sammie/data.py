@@ -138,7 +138,7 @@ def frequency_minima_scipy_groundmotion(data_A, data_B, asd_dis_a):
     f,coh = coherence_calculator(data_A, data_B)
     # find the point where there is max coherence
     rounded_coh = np.round(coh, 2)
-    first_one_coh = np.min(np.where(rounded_coh == 1.00))
+    first_one_coh = np.min(np.where(abs(rounded_coh - 1.00) < 0.01))
     last_half_coh = np.max(np.where((rounded_coh[0:first_one_coh] - 0.5) < 0.01))
     min_vals = argrelextrema(asd_dis_a.value[0:first_one_coh], np.less)[0]
     closest_val = np.min(np.where(np.abs(min_vals - last_half_coh) < 5))
@@ -238,7 +238,7 @@ def padded_ground_motion(gpstime, dof):
     _,n_sei = conditional_n_sei(cutoff_freq, noise_model, asd_dis_a)
     padded_asd_a, padded_asd_b = pad_asd(asd_dis_a, asd_dis_b, cutoff_freq)
 
-    return padded_asd_a.frequencies.value, padded_asd_a.value, displacement_asd.value, n_sei
+    return padded_asd_a.frequencies.value, padded_asd_a.value, displacement_asd.value, n_sei, cutoff_freq
 
 def conditional_n_sei(cutoff, noise_model, disp_asd):
     """ Adpated seismic noise
@@ -259,8 +259,10 @@ def conditional_n_sei(cutoff, noise_model, disp_asd):
     n_sei : array
         Adapted seismic noise array
     """
+    print(cutoff)
     upper = np.max(np.where(disp_asd.frequencies.value == cutoff))
-    lower = np.max(np.where((disp_asd.frequencies.value - 1e-2) <0.001))
+    lower = np.max(np.where(abs(disp_asd.frequencies.value - 3e-2) <0.001))
+    print(disp_asd.frequencies.value[lower])
     x = disp_asd.frequencies.value[lower:upper]
     y = disp_asd.value[lower:upper]
     param, _ = curve_fit(noise_model, x, y)
