@@ -167,7 +167,7 @@ class Data:
         -------
         f : array
             Frequency array
-        plant : array
+        plant : TransferFunction
             The frequency response of the plant.
         """
         f, plant = self.get_modeled("Plant")
@@ -181,7 +181,7 @@ class Data:
         -------
         f : array
             Frequency array
-        transmissivity : array
+        transmissivity : TransferFunction
             The frequency response of the transmissivity
         """
         f, transmissivity = self.get_modeled("Transmissivity")

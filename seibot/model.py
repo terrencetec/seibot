@@ -1,5 +1,6 @@
 """Model Library
 """
+import control
 import numpy as np
 
 
@@ -72,10 +73,10 @@ class Model:
 
         Returns
         -------
-        freq_resp : array
-            Frequency response of the plant
+        plant : TransferFunction
+            Transfer function of the plant.
         """
-        s = 1j*2*np.pi*f
-        freq_resp = dcgain * wn**2 / (s**2 + wn/q*s + wn**2)
+        s = control.tf("s")
+        plant = dcgain * wn**2 / (s**2 + wn/q*s + wn**2)
 
-        return freq_resp
+        return plant
