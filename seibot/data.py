@@ -214,7 +214,7 @@ class Data:
             seismic_asd = self.pad_seismic_noise(seismic_asd, coherence)
         else:
             f, seismic_asd = self.get_modeled("Seismic")
-            seismic_asd = abs(seismic_asd)
+            seismic_asd = abs(seismic_asd(1j*2*np.pi*f))
 
         return f, seismic_asd
 
