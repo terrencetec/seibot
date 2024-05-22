@@ -1,11 +1,48 @@
 """Seibot foton"""
+import control
+import foton
+import numpy as np
 
 
 class Foton:
     """Foton class"""
-    def __init__(self):
-        """Constructor"""
-        pass
+    def __init__(self, path_foton_file):
+        """Constructor
+        
+        Parameters
+        ----------
+        path_foton_file : str
+            Path of the foton file.
+        """
+        self.path_foton_file = path_foton_file
+        self.foton = foton.Filterfile(path_foton_file)
+
+    def get_filter_tf(module, fm_list):
+        """Get transfer function from a foton filter file
+        Parameters
+        ----------
+        module : str
+            Specify which filter module in the foton file.
+        fm_list : list of int
+            Specify list of engaged filter modules.
+
+        Returns
+        -------
+        tf : TransferFunction
+            The transfer function of the filter.
+        """
+        index_list = np.array(fm_list) - 1  # Compensate for foton offset
+        tf_list = []
+        
+        for i in index_list:
+            get_zpk = self.foton[module][i].get_zpk()
+            _tf = self.get_zpk2tf(get_zpk)
+            tf_list.append(_tf)
+
+        tf = np.prod(tf_list)
+
+        return tf
+        
     
     def get_zpk2tf(self, get_zpk, plant="s"):
         """Convert output from foton get_zpk() into a transfer function
