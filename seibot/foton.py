@@ -15,9 +15,9 @@ class Foton:
             Path of the foton file.
         """
         self.path_foton_file = path_foton_file
-        self.foton = foton.Filterfile(path_foton_file)
+        self.foton = foton.FilterFile(path_foton_file)
 
-    def get_filter_tf(module, fm_list):
+    def get_filter_tf(self, module, fm_list):
         """Get transfer function from a foton filter file
         Parameters
         ----------
@@ -44,7 +44,7 @@ class Foton:
         return tf
         
     
-    def get_zpk2tf(self, get_zpk, plant="s"):
+    def get_zpk2tf(self, get_zpk, plane="s"):
         """Convert output from foton get_zpk() into a transfer function
         
         Parameters
