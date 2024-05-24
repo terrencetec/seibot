@@ -74,19 +74,18 @@ class FilterPool:
     def __call__(self):
         """Returns a list of filters"""
         return self.filter_pool
-        
 
     def construct_filter_pool(self):
         """Construct the filter pool"""
         self.filter_pool = []
 
         for filter_ in self.config.sections():
-            foton_file = self.config[filter_].get("filter_file")
+            foton_file = self.config[filter_].get("foton_file")
             foton_module = self.config[filter_].get("foton_module")
             foton_fm = self.config[filter_].get("foton_fm")
 
             # Convert foton_fm str to list.
-            fm_list = [fm.strip() for fm in foton_fm.split(",")]
+            fm_list = [int(fm.strip()) for fm in foton_fm.split(",")]
 
             foton = seibot.foton.Foton(foton_file)
             tf = foton.get_filter_tf(foton_module, fm_list)
