@@ -11,11 +11,11 @@ class Filter(control.TransferFunction):
     
     Attribute
     ---------
-    foton_file : str
+    filter_file : str
         The path of the foton file.
-    foton_module : str
+    module : str
         The filter module the filter is in.
-    foton_fm : list of int
+    fm : list of int
         The engaged FMs of this filter
     """
     def __init__(self, *args):
@@ -23,36 +23,36 @@ class Filter(control.TransferFunction):
         super().__init__(*args)
         
     @property
-    def foton_module(self):
+    def module(self):
         """Foton module name"""
-        return self._foton_module
+        return self._module
 
-    @foton_module.setter
-    def foton_module(self, _foton_module):
+    @module.setter
+    def module(self, _module):
         """Foton module setter
         
         Parameters
         ----------
-        _foton_module : str
+        _module : str
             The foton module.
         """
-        self._foton_module = _foton_module
+        self._module = _module
 
     @property
-    def foton_fm(self):
+    def fm(self):
         """Foton FM list"""
-        return self._foton_fm
+        return self._fm
 
-    @foton_fm.setter
-    def foton_fm(self, _foton_fm):
+    @fm.setter
+    def fm(self, _fm):
         """Foton FM list setter
         
         Parameters
         ----------
-        _foton_fm : list of int
+        _fm : list of int
             The foton FM list.
         """
-        self._foton_fm = _foton_fm
+        self._fm = _fm
 
 
 class FilterPool:
@@ -80,21 +80,42 @@ class FilterPool:
         self.filter_pool = []
 
         for filter_ in self.config.sections():
-            foton_file = self.config[filter_].get("foton_file")
-            foton_module = self.config[filter_].get("foton_module")
-            foton_fm = self.config[filter_].get("foton_fm")
+            filter_file = self.config[filter_].get("filter_file")
+            module = self.config[filter_].get("module")
+            fm = self.config[filter_].get("fm")
 
-            # Convert foton_fm str to list.
-            fm_list = [int(fm.strip()) for fm in foton_fm.split(",")]
+            # Convert fm str to list.
+            fm_list = [int(fm.strip()) for fm in fm.split(",")]
 
-            foton = seibot.foton.Foton(foton_file)
-            tf = foton.get_filter_tf(foton_module, fm_list)
+            foton = seibot.foton.Foton(filter_file)
+            tf = foton.get_filter_tf(module, fm_list)
 
             # Construct a filter instance
             filter_obj = Filter(tf)
-            filter_obj.foton_file = foton_file
-            filter_obj.foton_module = foton_module
-            filter_obj.foton_fm = foton_fm
+            filter_obj.filter_file = filter_file
+            filter_obj.module = module
+            filter_obj.fm = fm
 
             # Append the instance to the pool
             self.filter_pool.append(filter_obj)
+
+
+class InverseFilters:
+    """Inverse response filters"""
+    def __init__(self):
+        """Constructor"""
+        pass
+
+    def gs13(self):
+        """GS13 sensor inverse response filter"""
+        s = control.tf("s")
+        wn = 1*2*np.pi  # resonance at 1 Hz
+        q = 1/np.sqrt(2)  # q at 0.707
+        invese = 1/s**3 * (s**2 + wn/q*s + wn**2)
+        return inverse
+
+    def sts(self):
+        """STS sensor inverse response filter"""
+        s = control.tf("s")
+        inverse = 1/s
+        return inverse
