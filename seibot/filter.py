@@ -112,10 +112,12 @@ class InverseFilters:
         wn = 1*2*np.pi  # resonance at 1 Hz
         q = 1/np.sqrt(2)  # q at 0.707
         invese = 1/s**3 * (s**2 + wn/q*s + wn**2)
+
         return inverse
 
     def sts(self):
         """STS sensor inverse response filter"""
         s = control.tf("s")
         inverse = 1/s
+
         return inverse
