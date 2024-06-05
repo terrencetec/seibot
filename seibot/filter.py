@@ -55,7 +55,7 @@ class Filter(control.TransferFunction):
         self._fm = _fm
 
 
-class FilterPool:
+class FilterPool(list):
     """Filter pool"""
     def __init__(self, filter_config):
         """Constructor
@@ -65,20 +65,16 @@ class FilterPool:
         filter_config : str
             Path of the filter config.
         """
+        super().__init__()
         self.config = configparser.ConfigParser(allow_no_value=True)
         self.config.optionxform = str
         self.config.read(filter_config)
 
         self.construct_filter_pool()
 
-    def __call__(self):
-        """Returns a list of filters"""
-        return self.filter_pool
 
     def construct_filter_pool(self):
         """Construct the filter pool"""
-        self.filter_pool = []
-
         for filter_ in self.config.sections():
             filter_file = self.config[filter_].get("filter_file")
             module = self.config[filter_].get("module")
@@ -97,7 +93,7 @@ class FilterPool:
             filter_obj.fm = fm
 
             # Append the instance to the pool
-            self.filter_pool.append(filter_obj)
+            self.append(filter_obj)
 
 
 class InverseFilters:
