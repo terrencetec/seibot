@@ -174,9 +174,9 @@ class Forecast:
         """
         oltf = plant * controller
         sensitivity = 1 / (1+oltf)
-        complementary = 1 - sensitivity
+        complement = 1 - sensitivity
         filtered_disturbance = abs(sensitivity(1j*2*np.pi*f)) * disturbance
-        filtered_noise = abs(complementary(1j*2*np.pi*f)) * noise
+        filtered_noise = abs(complement(1j*2*np.pi*f)) * noise
         displacement = (filtered_disturbance**2 + filtered_noise**2)**.5
 
         return displacement
