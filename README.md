@@ -118,21 +118,122 @@ inverse_filter = gs13
 
 The seibot configuration file contains 3 groups of sections.
 The first group contains sections
-`[Channels]`, `[CDSutils]`, and ``[Welch]`.
+`[Channels]`, `[CDSutils]`, and `[Welch]`.
 The second group contain sections
 `[Seismic]`, `[Seismometer]`, `[Inertial sensor]`, `[Relative sensor]`,
 `[Plant]`, and `[Transmissivity]`.
 The third group contains sections
 `[Sensor correction filters]`, `[Low pass filters]`, and `[High pass filters]`.
 
-In the `[Channels]` section, two parameters are required.
+
+`[Channels]` section
 
  - `seismometer`: The channel name of the sensor correction seismometer.
  Readout should be raw in velocity. The seismic noise and seismometer noise
- are estimated using this readout
+ are estimated using this readout.
  - `seismometer_coh`: The channel name of a seismometer reading a coherent
 ground motion to the sensor correction seisometer. This is used to determine
-frequency at which the seismometer readout is dominated by noise/signal.
+the frequency at which the seismometer readout is dominated by noise/signal.
+
+`[CDSutils]` section
+
+- `duration`: Duration of data in the past to be taken (seconds).
+- `start`: The start time of the data segment (GPS time). This is optional.
+- Remove this option will default to start now.
+
+`[Welch]` section
+- `nperseg`: Number of data per segment used in Welch.
+- `fs`: Sampling frequency.
+
+`[Seismic]`, `[Seismometer]`, `[Inertial sensor]`, `[Relative sensor]`,
+`[Plant]`, `[Transmissivity]` sections:
+
+- `model`: Empirical/transfer function model selected from `seibot.model`.
+- `parameters_path`: Path of the model parameter file.
+- `dynamic`: Dynamically modelling. If true, parameters are not used and
+modeling using internal method.
+
+`[Sensor correction filters]`, `[Low pass filters]`, `[High pass filters]`
+sections:
+
+- `config`: The path of the filter pool configuration file.
+- `inverse_filter`: Optional. The inverse filter to be applied.
+
+
+### Filter pool configuration file.
+
+Shown below is an example of a configuration file defining the pool of
+sensor correction filters.
+The filter pool contains 9 sensor correction filters named
+`[low_low]`, `[low_mid]`...
+
+```
+[low_low]
+filter_file = ../foton_files/L1ISIHAM8.txt
+module = HAM8_SENSCOR_Y_UNCOR_FILT2
+fm = 1, 10
+
+[low_mid]
+filter_file = ../foton_files/L1ISIHAM8.txt
+module = HAM8_SENSCOR_Y_UNCOR_FILT2
+fm = 2, 10
+
+[low_high]
+filter_file = ../foton_files/L1ISIHAM8.txt
+module = HAM8_SENSCOR_Y_UNCOR_FILT2
+fm = 3, 10
+
+[mid_low]
+filter_file = ../foton_files/L1ISIHAM8.txt
+module = HAM8_SENSCOR_Y_UNCOR_FILT2
+fm = 4, 10
+
+[mid_mid]
+filter_file = ../foton_files/L1ISIHAM8.txt
+module = HAM8_SENSCOR_Y_UNCOR_FILT2
+fm = 5, 10
+
+[mid_high]
+filter_file = ../foton_files/L1ISIHAM8.txt
+module = HAM8_SENSCOR_Y_UNCOR_FILT2
+fm = 6, 10
+
+[high_low]
+filter_file = ../foton_files/L1ISIHAM8.txt
+module = HAM8_SENSCOR_Y_UNCOR_FILT2
+fm = 7, 10
+
+[high_mid]
+filter_file = ../foton_files/L1ISIHAM8.txt
+module = HAM8_SENSCOR_Y_UNCOR_FILT2
+fm = 8, 10
+
+[high_high]
+filter_file = ../foton_files/L1ISIHAM8.txt
+module = HAM8_SENSCOR_Y_UNCOR_FILT2
+fm = 9, 10
+```
+
+Each section in the configuration file correspond to one filter.
+The section name, e.g. `[low_low]`, is just a label and is not referenced.
+
+Each section contains 3 variables:
+
+- `filter_file`: The path of the foton filter file.
+- `module`: The filter module name.
+- `fm`: The engaged FMs. Comma separated.
+
+### Model parameters
+The model parameter files are simple text files with model parameters listed
+out space separated.
+
+This is an example of a parameter file specifying 4 parameters for
+`seibot.model.Model.noise2()`.
+
+```
+5.6234133e-11 1.3182567e-10 0.74 0
+```
+
 
 
 # Repository structure
@@ -140,6 +241,12 @@ frequency at which the seismometer readout is dominated by noise/signal.
 - **data**: Fetch and process timeseries data from CDS.
 - **model**: Frequency domain modeling tools for dynamic noise modeling.
 - **foton**: Foton wrapper to access real-time filter modules.
-- **forecast**: Real-time forecast platform motion
+- **forecast**: Real-time forecast platform motion.
+- **filter**: Interface with filter pool configuration files and construct
+filter pools.
+- **isolation_system**: Isolation system class.
+- **evaluate**: Evaluate isolation system performances.
+- **seibot**: Interface main configuration file and integrate submodules and 
+	obtain best real-time isolation configuration.
 
 Read issues: https://github.com/terrencetec/sammie/issues/1
