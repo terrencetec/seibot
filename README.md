@@ -30,9 +30,6 @@ pip install .
 
 # Usage
 
-## Quick start
-Seibot supports command line usages
-
 ## Command line usage
 Get sample configuration files.
 ```
@@ -56,9 +53,134 @@ seibot --config [config]
 This outputs a configuration file that states the best
 seismic isolation configuration.
 
-## Configuration files
-### Seibot configuration
+## Python scripting
+### High-level usage
+
+#### seibot.Seibot
+`seibot.Seibot` is the main class interfacing the lower-level submodules
+that interface the data and configuration files, produce real-time estimation
+of isolation performances and inform optimal filter selections.
+
+Construct a `Seibot` instance:
+```
+import seibot
+
+
+config = ...
+ham8_seibot = seibot.Seibot(config)
+```
+
+This initiates a `Seibot` instance that contains attributes that parse the
+config compile necessary information for real-time estimation.
+
+The simplest usage is the `get_best_filters()` method
+```
+best_filters = ham8_seibot.get_best_filters()
+```
+This returns a tuple in the form
+`(sensor correction filter, (low-pass filter, high-pass filter))`.
+The filters are `seibot.Filter` instances that contain the
+information of the filters. See (`seibot.Filter`)[#seibot.Filter]
+
+To export the information for further usages,
+use the method `export_best_filter(path)`.
+```
+path = ...
+ham8_seibot.export_best_filter(path)
+```
+This exports the filters information to a configuration file in the format
+```
+[Sensor correction filter]
+filter_file = /opt/rtcds/chans/llo/L1ISIHAM8.txt
+module = HAM8_SENSCOR_Y_UNCOR_FILT2
+fm = 1
+
+[Low-pass filter]
+filter_file = /opt/rtcds/chans/llo/L1ISIHAM8.txt
+module = HAM8_BLND_Y_SUPERSENS6_DISP
+fm = 1
+
+[High-pass filter]
+filter_file = /opt/rtcds/chans/llo/L1ISIHAM8.txt
+module = HAM8_BLND_Y_SUPERSENS6_INERT_HI
+fm = 1, 10
+```
+This configuration file is the output of Seibot and  is meant to be further
+further inferface with the Guardian state machine or other programs that
+enact these changes.
+
+### Intermediate-level usage
+#### seibot.IsolationSystem
+An `IsolationSystem` is initialized with 5 arguments
+`relative_sensor`, `inertial_sensor`, `seisometer`,
+`plant`, and `transmissivity`, which are `seibot.Sensor` and `seibot.Process`
+instances.
+These characterizes the hardware capability of the isolation system.
+```
+import seibot
+
+
+relative_sensor = seibot.Sensor(f, relative_sensor_noise)
+...
+transmissivity = seibot.Process(tf_transmissivity)
+
+ham8 = seibot.IsolationSystem(relative_sensor, inertial_sensor, seismometer...)
+```
+An alternative way to obtain an `IsolationSystem` instance is via
+the `Seibot.get_isolation_system()` method.
+```
+import seibot
+
+
+config = ...
+ham8_seibot = seibot.Seibot(config)
+
+ham8 = ham8_seibot.get_isolation_system()
+```
+
+The `IsolationSystem` can be installed with sensor correction filters
+and complementary filters (blends).
+```
+sensor_correction_filter = ...
+low_pass_filter = ...
+high_pass_filter = ...
+
+ham8.sensor_correction_filter = sensor_correction_filter
+ham8.low_pass_filter = low_pass_filter
+ham8.high_pass_filter = high_pass_filter
+```
+
+Alternatively, install a isolation configuration.
+```
+isolation_configuration = (sensor_correction_filter, (low_pass_filter, high_pass_filter))
+
+ham8.isolation_configuration = isolation_configuration
+```
+
+With the filters installed, the closed-loop displacement can be obtained:
+```
+f = ...  # Frequency array
+seismic_noise = ...
+
+displacement = ham8.get_displacement(f, seismic_noise)
+```
+
+
+
+#### seibot.sensor
+
+#### seibot.Filter
+
+
+`seibot.IsolationSystem` is a class that defines an isolation platform, such
+as the LIGO HAM-ISI.
+
+
+# Configuration files
+## Seibot configuration
+
 Here is an example configuration file.
+
 ```
 [Channels]
 seismometer = L1:ISI-GND_STS_HAM8_Y_DQ
@@ -160,7 +282,7 @@ sections:
 - `inverse_filter`: Optional. The inverse filter to be applied.
 
 
-### Filter pool configuration file.
+## Filter pool configuration file.
 
 Shown below is an example of a configuration file defining the pool of
 sensor correction filters.
@@ -223,7 +345,9 @@ Each section contains 3 variables:
 - `module`: The filter module name.
 - `fm`: The engaged FMs. Comma separated.
 
-### Model parameters
+
+## Model parameters
+
 The model parameter files are simple text files with model parameters listed
 out space separated.
 
@@ -244,7 +368,8 @@ This is an example of a parameter file specifying 4 parameters for
 - **forecast**: Real-time forecast platform motion.
 - **filter**: Interface with filter pool configuration files and construct
 filter pools.
-- **isolation_system**: Isolation system class.
+- **isolation_system**: Isolation system class with defined sensor performances
+.
 - **evaluate**: Evaluate isolation system performances.
 - **seibot**: Interface main configuration file and integrate submodules and 
 	obtain best real-time isolation configuration.
