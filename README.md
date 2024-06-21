@@ -107,12 +107,12 @@ filter_file = /opt/rtcds/chans/llo/L1ISIHAM8.txt
 module = HAM8_SENSCOR_Y_UNCOR_FILT2
 fm = 1
 
-[Low-pass filter]
+[Low pass filter]
 filter_file = /opt/rtcds/chans/llo/L1ISIHAM8.txt
 module = HAM8_BLND_Y_SUPERSENS6_DISP
 fm = 1
 
-[High-pass filter]
+[High pass filter]
 filter_file = /opt/rtcds/chans/llo/L1ISIHAM8.txt
 module = HAM8_BLND_Y_SUPERSENS6_INERT_HI
 fm = 1, 10
@@ -177,9 +177,37 @@ seismic_noise = ...
 displacement = ham8.get_displacement(f, seismic_noise)
 ```
 
+#### seibot.Evaluate
+`seibot.Evaluate` instances contain internal methods to evaluate
+filter configurations using different criteria.
+A `seibot.Evaluate` instance is initiated by an `IsolationSystem`
+(See [seibot.IsolationSystem](#seibotisolationsystem)) and
+a `FilterConfigurations` instances
+(see [seibot.FilterConfigurations](#seibotfilterconfigurations).
+```
+import seibot
 
+...
+seismic_noise = ...
+ham8 = seibot.IsolationSystem(...)
+filter_configurations = siebot.FilterConfigurations(...)
 
-#### seibot.sensor
+evalutate = seibot.Evaluate(ham8, filter_configurations, seismic noise)
+```
+
+The internal methods each iterates through all possible filter configurations
+for the specified isolation system and returns the best filter configuration
+for the given seismic condition.
+For example, the `rms_displacement()` method gives the best set of
+sensor correction and complementary filters that gives the least
+isolation platform RMS displacement.
+```
+best_filters = evaluate.rms_displacement()
+```
+ 
+
+#### seibot.Sensor
+#### seibot.Process
 
 #### seibot.Filter
 
@@ -273,7 +301,7 @@ the frequency at which the seismometer readout is dominated by noise/signal.
 
 - `duration`: Duration of data in the past to be taken (seconds).
 - `start`: The start time of the data segment (GPS time). This is optional.
-- Remove this option will default to start now.
+	Remove this option will default to start now.
 
 `[Welch]` section
 - `nperseg`: Number of data per segment used in Welch.
@@ -285,7 +313,7 @@ the frequency at which the seismometer readout is dominated by noise/signal.
 - `model`: Empirical/transfer function model selected from `seibot.model`.
 - `parameters_path`: Path of the model parameter file.
 - `dynamic`: Dynamically modelling. If true, parameters are not used and
-modeling using internal method.
+	modeling using internal method.
 
 `[Sensor correction filters]`, `[Low pass filters]`, `[High pass filters]`
 sections:
