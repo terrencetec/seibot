@@ -80,7 +80,7 @@ best_filters = ham8_seibot.get_best_filters()
 This returns a tuple in the form
 `(sensor correction filter, (low-pass filter, high-pass filter))`.
 The filters are `seibot.Filter` instances that contain the
-information of the filters. See [seibot.Filter](#seibot.Filter).
+information of the filters. See [seibot.Filter](#seibot.filter).
 
 To export the information for further usages,
 use the method `export_best_filter(path)`.
