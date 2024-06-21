@@ -3,13 +3,17 @@
 Semi-adaptive seismic isolation control framework for LIGO
 
 **Table of content**
-[Installation](#installation)
-[Usage](#usage)
-	[Command line usage](#command-line-usage)
-	[Python scripting usage](#python-scripting-usage)
-		[High-level usage](#high-level-usage)
-		[Intermediate-level usage](#intermediate-level-usage)
-
+- [Installation](#installation)
+- [Usage](#usage)
+	- [Command line usage](#command-line-usage)
+	- [Python scripting usage](#python-scripting-usage)
+		- [High-level usage](#high-level-usage)
+		- [Intermediate-level usage](#intermediate-level-usage)
+- [Configuration files](#configuration-files)
+	- [Seibot configuration](#seibot-configuration)
+	- [Filter pool configuration](#filter-pool-configuration)
+	- [Model parameters configuration](#model-parameters-configuration)
+- [Repository structure](#repository-structure)
 # Installation
 
 ## Create conda environment and install dependencies
@@ -290,7 +294,7 @@ sections:
 - `inverse_filter`: Optional. The inverse filter to be applied.
 
 
-## Filter pool configuration file.
+## Filter pool configuration
 
 Shown below is an example of a configuration file defining the pool of
 sensor correction filters.
@@ -354,7 +358,7 @@ Each section contains 3 variables:
 - `fm`: The engaged FMs. Comma separated.
 
 
-## Model parameters
+## Model parameters configuration
 
 The model parameter files are simple text files with model parameters listed
 out space separated.
@@ -365,7 +369,6 @@ This is an example of a parameter file specifying 4 parameters for
 ```
 5.6234133e-11 1.3182567e-10 0.74 0
 ```
-
 
 
 # Repository structure
