@@ -5,8 +5,8 @@ Semi-adaptive seismic isolation control framework for LIGO
 **Table of content**
 - [Installation](#installation)
 - [Usage](#usage)
-	- [Command line usage](#command-line-usage)
-	- [Python scripting usage](#python-scripting-usage)
+	- [Command line](#command-line)
+	- [Python scripting](#python-scripting)
 		- [High-level usage](#high-level-usage)
 		- [Intermediate-level usage](#intermediate-level-usage)
 - [Configuration files](#configuration-files)
@@ -42,7 +42,7 @@ pip install .
 
 # Usage
 
-## Command line usage
+## Command line
 Get sample configuration files.
 ```
 seibot --get-seibot-config -p [path]
