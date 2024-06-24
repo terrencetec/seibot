@@ -167,7 +167,7 @@ filter configurations using different criteria.
 A `seibot.Evaluate` instance is initiated by an `IsolationSystem`
 (See [seibot.IsolationSystem](#seibotisolationsystem)) and
 a `FilterConfigurations` instances
-(see [seibot.FilterConfigurations](#seibotfilterconfigurations).
+(see [seibot.FilterConfigurations](#seibotfilterconfigurations)).
 ```
 import seibot
 
