@@ -9,6 +9,7 @@ Semi-adaptive seismic isolation control framework for LIGO
 	- [Python scripting](#python-scripting)
 		- [High-level usage](#high-level-usage)
 		- [Intermediate-level usage](#intermediate-level-usage)
+		- [Low-level usage](#low-level-usage)
 - [Configuration files](#configuration-files)
 	- [Seibot configuration](#seibot-configuration)
 	- [Filter pool configuration](#filter-pool-configuration)

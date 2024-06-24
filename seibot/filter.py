@@ -2,6 +2,7 @@
 import configparser
 
 import control
+import numpy as np
 
 import seibot.foton
 
@@ -95,6 +96,56 @@ class FilterPool(list):
             # Append the instance to the pool
             self.append(filter_obj)
 
+
+class FilterConfigurations:
+    """All available filter configurations
+    
+    Parameters
+    ----------
+    sc_pool : seibot.FilterPool
+        The pool of sensor correction filters.
+    lp_pool : seibot.FilterPool
+        The pool of low-pass filters.
+    hp_pool : seibot.FilterPool
+        The pool of high-pass filters.
+
+    Attributes
+    ----------
+    matrix : array of shape(len(sc_pool), len(lp_pool))
+        Configuration matrix with elements containing
+        `(seibot.Filter, (seibot.Filter, seibot.Filter))`,
+        the sensor correction filter and the 2 complementary filters.
+    """
+    def __init__(self, sc_pool, lp_pool, hp_pool):
+        """Constructor
+        
+        Parameters
+        ----------
+        sc_pool : seibot.FilterPool
+            The pool of sensor correction filters.
+        lp_pool : seibot.FilterPool
+            The pool of low-pass filters.
+        hp_pool : seibot.FilterPool
+            The pool of high-pass filters.
+        """
+        len_sc = len(sc_pool)
+        len_lp = len(lp_pool)
+        matrix = np.empty(shape=(len_sc, len_lp))
+        for i in range(len(matrix)):
+            for j in range(len(matrix)[0]):
+                matrix[i, j] = (sc_pool[i], (lp_pool[j], hp_pool[j]))
+        self.matrix = matrix
+
+    @property
+    def matrix(self):
+        """Configuration matrix"""
+        return self._matrix
+    
+    @matrix.setter
+    def matrix(self, _matrix):
+        """Configuration matrix setter"""
+        self._matrix = _matrix
+    
 
 class InverseFilters:
     """Inverse response filters"""
