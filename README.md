@@ -13,6 +13,7 @@ Semi-adaptive seismic isolation control framework for LIGO
 	- [Seibot configuration](#seibot-configuration)
 	- [Filter pool configuration](#filter-pool-configuration)
 	- [Model parameters configuration](#model-parameters-configuration)
+- [Seibot output file](#seibot-output-file)
 - [Repository structure](#repository-structure)
 # Installation
 
@@ -63,7 +64,7 @@ Run Seibot.
 seibot --config [config]
 ```
 This outputs a configuration file that states the best
-seismic isolation configuration.
+seismic isolation configuration. See [Seibot output file](#seibot-output-file).
 
 ## Python scripting
 ### High-level usage
@@ -100,26 +101,8 @@ use the method `export_best_filter(path)`.
 path = ...
 ham8_seibot.export_best_filter(path)
 ```
-This exports the filters information to a configuration file in the format
-```
-[Sensor correction filter]
-filter_file = /opt/rtcds/chans/llo/L1ISIHAM8.txt
-module = HAM8_SENSCOR_Y_UNCOR_FILT2
-fm = 1
-
-[Low pass filter]
-filter_file = /opt/rtcds/chans/llo/L1ISIHAM8.txt
-module = HAM8_BLND_Y_SUPERSENS6_DISP
-fm = 1
-
-[High pass filter]
-filter_file = /opt/rtcds/chans/llo/L1ISIHAM8.txt
-module = HAM8_BLND_Y_SUPERSENS6_INERT_HI
-fm = 1, 10
-```
-This configuration file is the output of Seibot and  is meant to be further
-further inferface with the Guardian state machine or other programs that
-enact these changes.
+This exports the filters information to a configuration file.
+See [Seibot output file](#seibot-output-file)
 
 ### Intermediate-level usage
 #### seibot.IsolationSystem
@@ -162,11 +145,11 @@ ham8.low_pass_filter = low_pass_filter
 ham8.high_pass_filter = high_pass_filter
 ```
 
-Alternatively, install a isolation configuration.
+Alternatively, install a filter configuration.
 ```
-isolation_configuration = (sensor_correction_filter, (low_pass_filter, high_pass_filter))
+filter_configuration = (sensor_correction_filter, (low_pass_filter, high_pass_filter))
 
-ham8.isolation_configuration = isolation_configuration
+ham8.filter_configuration = filter_configuration
 ```
 
 With the filters installed, the closed-loop displacement can be obtained:
@@ -205,10 +188,13 @@ isolation platform RMS displacement.
 best_filters = evaluate.rms_displacement()
 ```
  
+### Low-level usage
 
+#### seibot.Data
+#### seibot.Forecast
+#### seibot.Model
 #### seibot.Sensor
 #### seibot.Process
-
 #### seibot.Filter
 
 
@@ -398,6 +384,30 @@ This is an example of a parameter file specifying 4 parameters for
 5.6234133e-11 1.3182567e-10 0.74 0
 ```
 
+# Seibot output file
+
+Seibot evaluates the isolation performance and inform the users the best filter configurations using a configuration file as follows.
+
+```
+[Sensor correction filter]
+filter_file = /opt/rtcds/chans/llo/L1ISIHAM8.txt
+module = HAM8_SENSCOR_Y_UNCOR_FILT2
+fm = 1
+
+[Low pass filter]
+filter_file = /opt/rtcds/chans/llo/L1ISIHAM8.txt
+module = HAM8_BLND_Y_SUPERSENS6_DISP
+fm = 1
+
+[High pass filter]
+filter_file = /opt/rtcds/chans/llo/L1ISIHAM8.txt
+module = HAM8_BLND_Y_SUPERSENS6_INERT_HI
+fm = 1, 10
+```
+
+This configuration file is the output of Seibot and is meant to be further
+further inferface with the Guardian state machine or other programs that
+enact these changes.
 
 # Repository structure
 
