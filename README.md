@@ -191,6 +191,88 @@ best_filters = evaluate.rms_displacement()
  
 ### Low-level usage
 
+#### seibot.filter module
+`seibot.filter` module contain classes `Filter`, `FilterPool`, and
+`FilterConfiguration`.
+
+The `seibot.filter.Filter` class inherits `control.TransferFunction` class
+and has additional attributes `filter_file`, `module` and `fm` that
+identify the origin of the filter in Foton.
+To construct a `seibot.filter.Filter` instance:
+```
+import control
+
+import seibot.filter
+
+
+tf = control.tf(...)
+
+filter = seibot.filter.Filter(tf)
+```
+
+Access filter information
+```
+print(filter.filter_file)
+print(filter.module)
+print(filter.fm)
+```
+
+The `seibot.filter.FilterPool` class inherits the `list` class
+and is a list of `seibot.filter.Filter` instances.
+This class is used to construct a pool of filters for sensor correction and
+complementary filters.
+To construct a `seibot.filter.FilterPool` instance, use a
+[Filter pool configuration](#filter-pool-configuration).
+```
+filter_config = ...
+
+filter_pool = seibot.filter.FilterPool(filter_config)
+```
+Then, simply use it as a `list` instance. For example,
+```
+best_filter = filter_pool[1]
+
+fm = best_filter.fm
+```
+
+The `seibot.filter.FilterConfigurations` class is a function class for all
+available filter configurations of sensor correction and complementary filters.
+It can be constructed using a pool of sensor correction filters,
+a pool of low-pass filters, and a pool of high-pass filters.
+Alternatively, it can be constructed using the paths of
+the filter configuration files.
+```
+# Paths of the configuration files.
+sc_config = ...
+lp_config = ...
+hp_config = ...
+
+# Sensor correction and complementary filter pools.
+sc_pool = seibot.filter.FilterPool(sc_config)
+lp_pool = ...
+hp_pool = ...
+
+filter_config = seibot.filter.FilterConfigurations(sc_pool, lp_pool, hp_pool)
+```
+or
+```
+filter_config = seibot.filter.FilterConfigurations(
+	sc_config=sc_config, lp_config=lp_config, hp_config=hp_config)
+```
+or in any combination
+```
+filter_config = seibot.filter.FilterConfigurations(
+	sc_pool, lp_config=lp_config, hp_pool=hp_pool)
+```
+The `seibot.filter.FilterConfigurations` is a callable with 2 integer
+parameters, indicating the index of the sensor correction filters and the
+index of the complementary filters.
+It returns a configuration in the form of
+(sensor_correction, (low_pass_filter, high_pass_filter)).
+```
+sc, (lp, hp) = filter_config(1, 2)
+```
+
 #### seibot.Data
 #### seibot.Forecast
 #### seibot.Model
