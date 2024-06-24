@@ -98,7 +98,7 @@ class FilterPool(list):
 
 
 class FilterConfigurations:
-    """All available filter configurations
+    """Function class for all available filter configurations
     
     Parameters
     ----------
@@ -109,43 +109,78 @@ class FilterConfigurations:
     hp_pool : seibot.FilterPool
         The pool of high-pass filters.
 
-    Attributes
-    ----------
-    matrix : array of shape(len(sc_pool), len(lp_pool))
-        Configuration matrix with elements containing
-        `(seibot.Filter, (seibot.Filter, seibot.Filter))`,
-        the sensor correction filter and the 2 complementary filters.
+    Returns
+    -------
+    filter_configuration : Tuple
+        (sensor_correction_filter, (low_pass_filter, high_pass_filter))
     """
-    def __init__(self, sc_pool, lp_pool, hp_pool):
+    def __init__(self,
+                 sc_pool=None, lp_pool=None, hp_pool=None,
+                 sc_config=None, lp_config=None, hp_config=None):
         """Constructor
         
         Parameters
         ----------
-        sc_pool : seibot.FilterPool
+        sc_pool : seibot.FilterPool, optional
             The pool of sensor correction filters.
-        lp_pool : seibot.FilterPool
+            If `sc_pool` is `None`, `sc_config` must be specified.
+            Defaults `None`.
+        lp_pool : seibot.FilterPool, optional
             The pool of low-pass filters.
-        hp_pool : seibot.FilterPool
+            If `lp_pool` is `None`, `lp_config` must be specified.
+            Defaults `None`.
+        hp_pool : seibot.FilterPool, optional
             The pool of high-pass filters.
+            If `hp_pool` is `None`, `hp_config` must be specified.
+            Defaults `None`.
+        sc_config : str, optional
+            Path of the sensor correction filter config.
+            Defaults `None`.
+        lp_config : str, optional
+            Path of the low-pass filter config.
+            Defaults `None`
+        hp_config : str, optional
+            Path of the high-pass filter config.
+            Defaults `None.
         """
-        len_sc = len(sc_pool)
-        len_lp = len(lp_pool)
-        matrix = np.empty(shape=(len_sc, len_lp))
-        for i in range(len(matrix)):
-            for j in range(len(matrix)[0]):
-                matrix[i, j] = (sc_pool[i], (lp_pool[j], hp_pool[j]))
-        self.matrix = matrix
+        if sc_pool is None and sc_config is not None:
+            sc_pool = FilterPool(sc_config)
+        elif sc_pool is None and sc_config is None:
+            raise ValueError("sc_pool or sc_config must be provided.")
+        if lp_pool is None and sc_config is not None:
+            lp_pool = FilterPool(sc_config)
+        elif lp_pool is None and sc_config is None:
+            raise ValueError("lp_pool or sc_config must be provided.")
+        if hp_pool is None and sc_config is not None:
+            hp_pool = FilterPool(sc_config)
+        elif hp_pool is None and sc_config is None:
+            raise ValueError("hp_pool or sc_config must be provided.")
+        self.sc_pool = sc_pool
+        self.lp_pool = lp_pool
+        self.hp_pool = hp_pool
 
-    @property
-    def matrix(self):
-        """Configuration matrix"""
-        return self._matrix
-    
-    @matrix.setter
-    def matrix(self, _matrix):
-        """Configuration matrix setter"""
-        self._matrix = _matrix
-    
+    def __call__(self, i, j):
+        """ Returns a filter configuration tuple.
+        
+        Parameters
+        ----------
+        i : int
+            Sensor correction index
+        j : int
+            Complementary filter index
+
+        Returns
+        -------
+        filter_configuration : Tuple
+            (sensor_correction_filter, (low_pass_filter, high_pass_filter))
+        """
+        sc = self.sc_pool[i]
+        lp = self.lp_pool[j]
+        hp = self.hp_pool[j]
+        filter_configuration = (sc, (lp, hp))
+
+        return filter_configuration
+
 
 class InverseFilters:
     """Inverse response filters"""
