@@ -181,3 +181,13 @@ class Forecast:
 
         return displacement
 
+    @property
+    def relative_sensor_noise(self):
+        """Relative sensor noise"""
+        return self._relative_sensor_noise
+    
+    @relative_sensor_noise.setter
+    def relative_sensor_noise(self, _relative_sensor_noise):
+        """Relative sensor noise setter"""
+        self._relative_sensor_noise = _relative_sensor_noise
+# continues.

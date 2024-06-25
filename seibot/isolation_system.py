@@ -1,6 +1,8 @@
 """Isolation system class"""
 import control
 
+import seibot.forecast
+
 
 class Sensor:
     """A sensor class
@@ -71,12 +73,13 @@ class IsolationSystem:
 
     Note
     ----
-    This isolation system class contains sensors and plant information
+    This isolation system class represents a physical isolation system
+    and contains sensors and plant information
     of a physical seismic isolation system.
     """
     def __init__(self,
                  relative_sensor, inertial_sensor, seismometer,
-                 plant, transmissivity):
+                 plant, transmissivity, controller):
         """Constructor
 
         Parameters
@@ -91,13 +94,50 @@ class IsolationSystem:
             The plant.
         transmissivity : seibot.Process.
             The seismic transmissivity.
+        controller : seibot.Process or seibot.Filter
+            The feedback controller.
         """
         self.relative_sensor = relative_sensor
         self.inertial_sensor = inertial_sensor
         self.seismometer = seismometer
         self.plant = plant
         self.transmissivity = transmissivity
+        self.controller = controller
+        
+        self.filter_configuration = (None, (None, None))
 
+    def get_displacement(self, f, seismic_noise):
+        """Get closed-loop displacement
+        
+        Parameters
+        ----------
+        f : array
+            Frequency array.
+        seismic_noise : array
+            The amplitude spectral density of the seismic noise.
+
+        Returns
+        -------
+        displacement : array
+            The closed-loop displacement.
+        """
+        if (self.sensor_correction_filter is None
+                or self.low_pass_filter is None
+                or self.high_pass_filter is None):
+            raise ValueError("sensor_correction_filter, low_pass_filter"
+                             "or high_pass_filter is not set.")
+        
+        forecaster = seibot.forecast.Forecast()
+        forecaster.relative_sensor_noise = self.relative_sensor.noise
+        forecaster.inertial_sensor_noise = self.inertial_sensor.noise
+        forecaster.seismometer_noise = self.seismometer.noise
+        forecaster.plant = self.plant
+        forecaster.transmissivity = self.transmissivity
+        forecaster.controller = self.controller
+
+        displacement = forecaster.get_displacement()
+        
+        return displacment
     # def __call__(self,
     #              sensor_correction_filter,
     #              low_pass_filter, high_pass_filter):
@@ -165,3 +205,49 @@ class IsolationSystem:
     def transmissivity(self, _transmissivity):
         """Transmissivity setter"""
         self._transmissivity = _transmissivity
+
+    @property
+    def sensor_correction_filter(self):
+        """Sensor correction filter"""
+        sc, _ = self._filter_configuration
+        return sc
+    
+    @sensor_correction_filter.setter
+    def sensor_correction_filter(self, sc):
+        """Sensor correction filter setter"""
+        _, (lp, hp) = self.filter_configuration
+        self.filter_configuration = (sc, (lp, hp))
+
+    @property
+    def low_pass_filter(self):
+        """Low pass filter"""
+        _, (lp, __) = self.filter_configuration
+        return lp
+
+    @low_pass_filter.setter
+    def low_pass_filter(self, lp):
+        """Low pass filter setter"""
+        sc, (_, hp) = self.filter_configuration
+        self.filter_configuration = (sc, (lp, hp))
+        
+    @property
+    def high_pass_filter(self):
+        """High pass filter"""
+        _, (__, hp) = self.filter_configuration
+        return hp
+
+    @high_pass_filter.setter
+    def high_pass_filter(self, hp):
+        """High pass filter setter"""
+        sc, (lp, _) = self.filter_configuration
+        self.filter_configuration = (sc, (lp, hp))
+
+    @property
+    def filter_configuration(self):
+        """Filter configuration"""
+        return self._filter_configuration
+    
+    @filter_configuration.setter
+    def filter_configuration(self, _filter_configuration):
+        """Filter configuration setter"""
+        self._filter_configuration = _filter_configuration

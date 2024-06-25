@@ -109,8 +109,10 @@ See [Seibot output file](#seibot-output-file)
 #### seibot.IsolationSystem
 An `IsolationSystem` is initialized with 5 arguments
 `relative_sensor`, `inertial_sensor`, `seisometer`,
-`plant`, and `transmissivity`, which are `seibot.Sensor` and `seibot.Process`
+`plant`, `transmissivity`, and `controller`
+which are `seibot.Sensor` and `seibot.Process`
 instances.
+See [seibot.Sensor](#seibotsensor) and [seibot.Process](#seibotprocess).
 These characterizes the hardware capability of the isolation system.
 ```
 import seibot
