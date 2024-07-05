@@ -104,7 +104,11 @@ class IsolationSystem:
         self.transmissivity = transmissivity
         self.controller = controller
         
-        self.filter_configuration = (None, (None, None))
+        self.filter_configuration = {
+            "sensor correction filter": None,
+            "low pass filter": None,
+            "high pass filter": None,
+        }
 
     def get_displacement(self, f, seismic_noise):
         """Get closed-loop displacement
@@ -128,16 +132,30 @@ class IsolationSystem:
                              "or high_pass_filter is not set.")
         
         forecaster = seibot.forecast.Forecast()
-        forecaster.relative_sensor_noise = self.relative_sensor.noise
-        forecaster.inertial_sensor_noise = self.inertial_sensor.noise
-        forecaster.seismometer_noise = self.seismometer.noise
-        forecaster.plant = self.plant
-        forecaster.transmissivity = self.transmissivity
-        forecaster.controller = self.controller
-
-        displacement = forecaster.get_displacement()
+        disturbance = forecaster.get_disturbance(
+            f=f,
+            seismic_noise=seismic_noise,
+            transmissivity=self.transmissivity
+        )
+        noise = forecaster.get_noise(
+            f=f,
+            seismic_noise=seismic_noise,
+            seismometer_noise=self.seismometer.noise,
+            relative_sensor_noise=self.relative_sensor.noise,
+            inertial_sensor_noise=self.inertial_sensor.noise,
+            sensor_correction_filter=self.sensor_correction_filter,
+            h1=self.low_pass_filter,
+            h2=self.high_pass_filter,
+        )
+        displacement = forecaster.get_displacement(
+            f=f,
+            disturbance=disturbance,
+            noise=noise,
+            plant=self.plant,
+            controller=self.controller
+        )
         
-        return displacment
+        return displacement
     # def __call__(self,
     #              sensor_correction_filter,
     #              low_pass_filter, high_pass_filter):
@@ -209,38 +227,35 @@ class IsolationSystem:
     @property
     def sensor_correction_filter(self):
         """Sensor correction filter"""
-        sc, _ = self._filter_configuration
+        sc = self._filter_configuration["sensor correction filter"]
         return sc
     
     @sensor_correction_filter.setter
     def sensor_correction_filter(self, sc):
         """Sensor correction filter setter"""
-        _, (lp, hp) = self.filter_configuration
-        self.filter_configuration = (sc, (lp, hp))
+        self._filter_configuration["sensor correction filter"] = sc
 
     @property
     def low_pass_filter(self):
         """Low pass filter"""
-        _, (lp, __) = self.filter_configuration
+        lp = self.filter_configuration["low pass filter"]
         return lp
 
     @low_pass_filter.setter
     def low_pass_filter(self, lp):
         """Low pass filter setter"""
-        sc, (_, hp) = self.filter_configuration
-        self.filter_configuration = (sc, (lp, hp))
-        
+        self.filter_configuration["low pass filter"] = lp
+
     @property
     def high_pass_filter(self):
         """High pass filter"""
-        _, (__, hp) = self.filter_configuration
+        hp = self.filter_configuration["high pass filter"]
         return hp
 
     @high_pass_filter.setter
     def high_pass_filter(self, hp):
         """High pass filter setter"""
-        sc, (lp, _) = self.filter_configuration
-        self.filter_configuration = (sc, (lp, hp))
+        self.filter_configuration["high pass filter"] = hp
 
     @property
     def filter_configuration(self):

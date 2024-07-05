@@ -73,7 +73,6 @@ class FilterPool(list):
 
         self.construct_filter_pool()
 
-
     def construct_filter_pool(self):
         """Construct the filter pool"""
         for filter_ in self.config.sections():
@@ -171,13 +170,18 @@ class FilterConfigurations:
 
         Returns
         -------
-        filter_configuration : Tuple
-            (sensor_correction_filter, (low_pass_filter, high_pass_filter))
+        filter_configuration : Dict
+            Dictionary with key words ["sensor correction filter",
+            "low pass filter", "high pass filter"].
         """
         sc = self.sc_pool[i]
         lp = self.lp_pool[j]
         hp = self.hp_pool[j]
-        filter_configuration = (sc, (lp, hp))
+        filter_configuration = {
+            "sensor correction filter": sc,
+            "low pass filter": lp,
+            "high pass filter": hp
+        }
 
         return filter_configuration
 

@@ -91,8 +91,15 @@ The simplest usage is the `get_best_filters()` method
 ```
 best_filters = ham8_seibot.get_best_filters()
 ```
-This returns a tuple in the form
-`(sensor correction filter, (low-pass filter, high-pass filter))`.
+This returns a dictionary with in the form
+```
+{
+"sensor correction filter": ...,
+"low pass filter": ...,
+"high pass filter": ...
+}
+```
+where ... are [seibot.Filter](#seibotfilter) instances.
 The filters are `seibot.Filter` instances that contain the
 information of the filters. See [seibot.Filter](#seibotfilter).
 
@@ -150,7 +157,15 @@ ham8.high_pass_filter = high_pass_filter
 
 Alternatively, install a filter configuration.
 ```
-filter_configuration = (sensor_correction_filter, (low_pass_filter, high_pass_filter))
+sensor_correction_filter = seibot.Filter(...)
+low_pass_filter = seibot.Filter(...)
+high_pass_filter = seibot.Filter(...)
+
+filter_configuration = {
+	"sensor correction filter": ...,
+	"low pass filter": ...,
+	"high_pass_filter": ...
+}
 
 ham8.filter_configuration = filter_configuration
 ```

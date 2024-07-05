@@ -8,6 +8,7 @@ import scipy
 import scipy.optimize
 
 import seibot.model
+import seibot.foton
 
 
 class Data:
@@ -61,6 +62,7 @@ class Data:
         _, self.relative_sensor_noise = self.get_relative_sensor_noise()
         _, self.plant = self.get_plant()
         _, self.transmissivity = self.get_transmissivity()
+        _, self.controller = self.get_controller()
         
     @property
     def f(self):
@@ -132,6 +134,16 @@ class Data:
         """Transmissivity setter"""
         self._transmissivity = _transmissivity
 
+    @property
+    def controller(self):
+        """Controller"""
+        return self._controller
+
+    @controller.setter
+    def controller(self, _controller):
+        """Controller.setter"""
+        self._controller = _controller
+
     def get_inertial_sensor_noise(self):
         """Get inertial sensor noise
         
@@ -187,6 +199,29 @@ class Data:
         f, transmissivity = self.get_modeled("Transmissivity")
 
         return f, transmissivity
+
+    def get_controller(self):
+        """Get controller
+
+        Returns
+        -------
+        f : array
+            Frequency array
+        controller : TransferFunction
+            The controller.
+        """
+        filter_file = self.config["Controller"].get("filter_file")
+        module = self.config["Controller"].get("module")
+        fm = self.config["Controller"].get("fm")
+
+        fm_list = [int(fm.strip()) for fm in fm.split(",")]
+
+        foton = seibot.foton.Foton(filter_file)
+        controller = foton.get_filter_tf(module, fm_list)
+
+        f = self.f  # Dummy
+
+        return f, controller
 
     def get_seismic_noise(self):
         """Fetch and process seismometer data to get seismic noise

@@ -8,8 +8,78 @@ class Forecast:
         """Constructor"""
         pass
 
+    @property
+    def relative_sensor_noise(self):
+        """Relative sensor noise"""
+        return self._relative_sensor_noise
+
+    @relative_sensor_noise.setter
+    def relative_sensor_noise(self, _relative_sensor_noise):
+        """Relative sensor noise setter"""
+        self._relative_sensor_noise = _relative_sensor_noise
+
+    @property
+    def inertial_sensor_noise(self):
+        """Inertial sensor noise"""
+        return self._inertial_sensor_noise
+    
+    @inertial_sensor_noise.setter
+    def inertial_sensor_noise(self, _inertial_sensor_noise):
+        """Inertial sensor noise setter"""
+        self._inertial_sensor_noise = _inertial_sensor_noise
+
+    @property
+    def seismometer_noise(self):
+        """Seismometer noise"""
+        return self._seismometer_noise
+
+    @seismometer_noise.setter
+    def seismometer_noise(self, _seismometer_noise):
+        """Seismometer noise setter"""
+        self._seismometer_noise = _seismometer_noise
+
+    @property
+    def plant(self):
+        """Plant"""
+        return self._plant
+
+    @plant.setter
+    def plant(self, _plant):
+        """Plant setter"""
+        self._plant = _plant
+
+    @property
+    def transmissivity(self):
+        """Transmissivity"""
+        return self._transmissivity
+
+    @transmissivity.setter
+    def transmissivity(self, _transmissivity):
+        """Transmissivity setter"""
+        self._transmissivity = _transmissivity
+
+    @property
+    def controller(self):
+        """Controller"""
+        return self._controller
+
+    @controller.setter
+    def controller(self, _controller):
+        """Controller setter"""
+        self._controller = _controller
+
+    @property
+    def f(self):
+        """Frequency array"""
+        return self._f
+    
+    @f.setter
+    def f(self, _f):
+        """Frequency array setter"""
+        self._f = _f
+
     def get_sensor_correction_noise(self, f,
-                                    seismic_noise, seismometer_noise
+                                    seismic_noise, seismometer_noise,
                                     sensor_correction_filter):
         """Evaluate the sensor correction noise
 
@@ -33,7 +103,7 @@ class Forecast:
         h_trans = 1 - sensor_correction_filter
         filtered_seismometer = abs(h_sc(1j*2*np.pi*f)) * seismometer_noise
         filtered_seismic = abs(h_trans(1j*2*np.pi*f)) * seismic_noise
-        noise = (filtered_seismometer**2 + filtered_seismimc**2)**.5
+        noise = (filtered_seismometer**2 + filtered_seismic**2)**.5
         
         return noise
         
@@ -142,7 +212,7 @@ class Forecast:
             The estimated sensing noise of the isolation platform.
         """
         sensor_correction_noise = self.get_sensor_correction_noise(
-            f, seismic_noise, seismometer_noise)
+            f, seismic_noise, seismometer_noise, sensor_correction_filter)
         corrected_relative_noise = self.get_corrected_relative_noise(
             f, relative_sensor_noise, sensor_correction_noise)
         noise = self.get_super_sensor_noise(
