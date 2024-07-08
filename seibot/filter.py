@@ -170,11 +170,11 @@ class FilterConfigurations:
         if lp_pool is None and sc_config is not None:
             lp_pool = FilterPool(sc_config)
         elif lp_pool is None and sc_config is None:
-            raise ValueError("lp_pool or sc_config must be provided.")
+            raise ValueError("lp_pool or lp_config must be provided.")
         if hp_pool is None and sc_config is not None:
             hp_pool = FilterPool(sc_config)
         elif hp_pool is None and sc_config is None:
-            raise ValueError("hp_pool or sc_config must be provided.")
+            raise ValueError("hp_pool or hp_config must be provided.")
         self.sc_pool = sc_pool
         self.lp_pool = lp_pool
         self.hp_pool = hp_pool

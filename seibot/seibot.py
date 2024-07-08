@@ -57,8 +57,10 @@ class Seibot:
         lp_pool = seibot.filter.FilterPool(lp_config)
         hp_pool = seibot.filter.FilterPool(hp_config)
 
-        self.iso_config = seibot.isolation_system.IsolationConfiguraions(
+        self.filter_configurations = seibot.filter.FilterConfiguraions(
             sc_pool=sc_pool, lp_pool=lp_pool, hp_pool=hp_pool)
+
+        self.isolation_system = get_isolation_system(self.data)
 
         method = self.config.get("Evaluation", "method")
         evaulate = seibot.evaluate.Evaluate()
@@ -130,13 +132,16 @@ class Seibot:
             data.f, data.seismometer_noise)
         plant = seibot.isolation_system.Process(data.plant)
         transmissivity = seibot.isolation_system.Process(data.transmissivity)
+        controller = seibot.isolation_system.Process(data.controller)
 
         isolation_system = seibot.isolation_system.IsolationSystem(
             relative_sensor=relative_sensor,
             inertial_sensor=inertial_sensor,
             seismometer=seismoemter,
             plant=plant,
-            transmissivity=transmissivity)
+            transmissivity=transmissivity,
+            controller=controller,
+        )
 
         return isolation_system
 
