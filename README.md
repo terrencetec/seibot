@@ -387,7 +387,7 @@ The first group contains sections
 `[Channels]`, `[CDSutils]`, and `[Welch]`.
 The second group contain sections
 `[Seismic]`, `[Seismometer]`, `[Inertial sensor]`, `[Relative sensor]`,
-`[Plant]`, and `[Transmissivity]`.
+`[Plant]`, `[Transmissivity]`, `[Controller]`.
 The third group contains sections
 `[Sensor correction filters]`, `[Low pass filters]`, and `[High pass filters]`.
 
@@ -418,6 +418,11 @@ the frequency at which the seismometer readout is dominated by noise/signal.
 - `parameters_path`: Path of the model parameter file.
 - `dynamic`: Dynamically modelling. If true, parameters are not used and
 	modeling using internal method.
+
+`[Controller]` setion:
+- `filter_file`: The path of the foton file
+- `module`: The foton module that the controller is in.
+- `fm`: The list of engaged FMs for the controllers.
 
 `[Sensor correction filters]`, `[Low pass filters]`, `[High pass filters]`
 sections:
