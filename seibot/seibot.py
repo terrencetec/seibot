@@ -27,7 +27,7 @@ class Seibot:
         config : str
             Path of the Seibot configuration file.
         """
-        self.config = configparser.ConfigParser(allow_now_value=True)
+        self.config = configparser.ConfigParser(allow_no_value=True)
         self.config.optionxform = str
         self.config.read(config)
 
@@ -39,8 +39,19 @@ class Seibot:
         
         # Fetch all available filters from foton file.
         sc_config = self.config.get("Sensor correction filters", "config")
+        sc_inverse = self.config.get("Sensor correction filters",
+                                     "inverse_filter", fallback="none")
         lp_config = self.config.get("Low pass filters", "config")
+        lp_inverse = self.config.get("Low pass filters",
+                                     "inverse_filter", fallback="none")
         hp_config = self.config.get("High pass filters", "config")
+        hp_inverse = self.config.get("Sensor correction filters",
+                                     "inverse_filter", fallback="none")
+        
+        inverse_filters = seibot.filter.InverseFilters()
+        sc_inverse_filter = getattr(inverse_filters, sc_inverse)
+        lp_inverse_filter = getattr(inverse_filters, lp_inverse)
+        hp_inverse_filter = getattr(inverse_filters, hp_inverse)
 
         sc_pool = seibot.filter.FilterPool(sc_config)
         lp_pool = seibot.filter.FilterPool(lp_config)

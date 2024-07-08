@@ -213,6 +213,7 @@ class InverseFilters:
         """Constructor"""
         pass
 
+    @property
     def gs13(self):
         """GS13 sensor inverse response filter"""
         s = control.tf("s")
@@ -222,9 +223,15 @@ class InverseFilters:
 
         return inverse
 
+    @property
     def sts(self):
         """STS sensor inverse response filter"""
         s = control.tf("s")
         inverse = 1/s
 
         return inverse
+
+    @property
+    def none(self):
+        """Returns 1"""
+        return control.tf([1], [1])
