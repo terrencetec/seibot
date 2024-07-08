@@ -58,23 +58,42 @@ class Filter(control.TransferFunction):
 
 class FilterPool(list):
     """Filter pool"""
-    def __init__(self, filter_config):
+    def __init__(self, filter_config, inverse_filter=None):
         """Constructor
         
         Parameters
         ----------
         filter_config : str
             Path of the filter config.
+        inverse_filter : control.TransferFunction, optional
+            Filter representing the inverse response of a sensor.
+            The inverse of this filter is applied to get rid of the
+            calibration component of the filter, the filter is divided
+            by the inverse_filter before putting it into the pool.
+            Defaults None.
         """
         super().__init__()
         self.config = configparser.ConfigParser(allow_no_value=True)
         self.config.optionxform = str
         self.config.read(filter_config)
 
-        self.construct_filter_pool()
+        self.construct_filter_pool(inverse_filter)
 
-    def construct_filter_pool(self):
-        """Construct the filter pool"""
+    def construct_filter_pool(self, inverse_filter=None):
+        """Construct the filter pool
+        
+        Parameters
+        ----------
+        inverse_filter : control.TransferFunction, optional
+            Filter representing the inverse response of a sensor.
+            The inverse of this filter is applied to get rid of the
+            calibration component of the filter, the filter is divided
+            by the inverse_filter before putting it into the pool.
+            Defaults None.
+        """
+        if inverse_filter is None:
+            inverse_filter = control.tf([1], [1])
+
         for filter_ in self.config.sections():
             filter_file = self.config[filter_].get("filter_file")
             module = self.config[filter_].get("module")
@@ -85,6 +104,7 @@ class FilterPool(list):
 
             foton = seibot.foton.Foton(filter_file)
             tf = foton.get_filter_tf(module, fm_list)
+            tf = tf / inverse_filter
 
             # Construct a filter instance
             filter_obj = Filter(tf)
@@ -110,8 +130,9 @@ class FilterConfigurations:
 
     Returns
     -------
-    filter_configuration : Tuple
-        (sensor_correction_filter, (low_pass_filter, high_pass_filter))
+    filter_configuration : Dict
+        Dictionary with key words ["sensor correction filter",
+        "low pass filter", "high pass filter"].
     """
     def __init__(self,
                  sc_pool=None, lp_pool=None, hp_pool=None,
@@ -197,7 +218,7 @@ class InverseFilters:
         s = control.tf("s")
         wn = 1*2*np.pi  # resonance at 1 Hz
         q = 1/np.sqrt(2)  # q at 0.707
-        invese = 1/s**3 * (s**2 + wn/q*s + wn**2)
+        inverse = 1/s**3 * (s**2 + wn/q*s + wn**2)
 
         return inverse
 
