@@ -364,6 +364,11 @@ model = second_order_plant
 parameters_path = ../model_parameters/transmissivity.txt
 dynamic = False
 
+[Controller]
+filter_file = ../foton_files/L1ISIHAM8.txt
+module = HAM8_ISO_Y
+fm = 4, 8
+
 
 [Sensor correction filters]
 config = ../config/sesnor_correction_filters.ini
