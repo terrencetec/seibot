@@ -245,6 +245,19 @@ filter_config = ...
 
 filter_pool = seibot.filter.FilterPool(filter_config)
 ```
+Some filter contains compensation filters that inverse the responses
+of the sensors. To get rid of them, specify an `inverse_filter`.
+```
+inverse_filter = ...
+
+filter_pool = seibot.filter.FilterPool(filter_config, inverse_filter)
+```
+Preset `inverse_filter` can be found as methods
+in `seibot.filter.InverseFilters`.
+```
+seibot.filter.InverseFilters().gs13()
+seibot.filter.InverseFilters().sts()
+```
 Then, simply use it as a `list` instance. For example,
 ```
 best_filter = filter_pool[1]
