@@ -380,9 +380,13 @@ config = ../config/low_pass_filters.ini
 [High pass filters]
 config = ../config/high_pass_filters.ini
 inverse_filter = gs13
+
+
+[Evaluate]
+criterion = min_rms_displacement
 ```
 
-The seibot configuration file contains 3 groups of sections.
+The seibot configuration file contains 4 groups of sections.
 The first group contains sections
 `[Channels]`, `[CDSutils]`, and `[Welch]`.
 The second group contain sections
@@ -390,6 +394,8 @@ The second group contain sections
 `[Plant]`, `[Transmissivity]`, `[Controller]`.
 The third group contains sections
 `[Sensor correction filters]`, `[Low pass filters]`, and `[High pass filters]`.
+The fourth group contains sections
+`[Evaluate]`.
 
 
 `[Channels]` section
@@ -429,6 +435,11 @@ sections:
 
 - `config`: The path of the filter pool configuration file.
 - `inverse_filter`: Optional. The inverse filter to be applied.
+
+The `[Evaluation]` section has one variable.
+
+- `criterion`: The filter selection criterion.
+  Available options: `min_rms_displacement`.
 
 
 ## Filter pool configuration
