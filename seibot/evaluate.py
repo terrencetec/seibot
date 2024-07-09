@@ -1,4 +1,5 @@
 """Evaluate class"""
+import numpy as np
 
 
 class Evaluate:
@@ -29,11 +30,11 @@ class Evaluate:
             The amplitude spectral density of the seismic noise.
         """
         self.isolation_system = isolation_system
-        self.filter_configuration = filter_configurations
+        self.filter_configurations = filter_configurations
         self.f = f
         self.seismic_noise = seismic_noise
         
-        self.get_displacement_matrix()
+        self.displacement_matrix = self.get_displacement_matrix()
 
     @property
     def isolation_system(self):
@@ -48,7 +49,7 @@ class Evaluate:
     @property
     def filter_configurations(self):
         """Filter configurations"""
-        return filter_configurations
+        return self._filter_configurations
 
     @filter_configurations.setter
     def filter_configurations(self, _filter_configurations):
@@ -139,14 +140,15 @@ class Evaluate:
         """Returns a configuration with lowest RMS displacement.
         
         """
-        rms_displacement_matrix = np.empty(self.displacement_matrix[:, :, 0])
-        for i in range(self.rms_displacement_matrix):
-            for j in range(self.rms_displacement_matrix[0]):
-                rms_displacement_matrix = self.get_rms(
+        rms_displacement_matrix = np.empty(
+            np.shape(self.displacement_matrix[:, :, 0]))
+        for i in range(len(rms_displacement_matrix)):
+            for j in range(len(rms_displacement_matrix[0])):
+                rms_displacement_matrix[i, j] = self.get_rms(
                     self.f, self.displacement_matrix[i, j])
 
         argmin = np.argmin(rms_displacement_matrix)
-        min_i, min_j = np_unravel_index(argmin, rms_displacement_matrix.shape)
+        min_i, min_j = np.unravel_index(argmin, rms_displacement_matrix.shape)
         
         return self.filter_configurations(min_i, min_j)
 
