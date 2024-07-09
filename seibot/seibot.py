@@ -1,6 +1,9 @@
 """Seibot class
 """
+import configparser
+
 import seibot.data
+import seibot.evaluate
 import seibot.forecast
 import seibot.filter
 import seibot.isolation_system
@@ -53,64 +56,25 @@ class Seibot:
         lp_inverse_filter = getattr(inverse_filters, lp_inverse)
         hp_inverse_filter = getattr(inverse_filters, hp_inverse)
 
-        sc_pool = seibot.filter.FilterPool(sc_config)
-        lp_pool = seibot.filter.FilterPool(lp_config)
-        hp_pool = seibot.filter.FilterPool(hp_config)
+        sc_pool = seibot.filter.FilterPool(sc_config, sc_inverse_filter)
+        lp_pool = seibot.filter.FilterPool(lp_config, lp_inverse_filter)
+        hp_pool = seibot.filter.FilterPool(hp_config, hp_inverse_filter)
 
-        self.filter_configurations = seibot.filter.FilterConfiguraions(
-            sc_pool=sc_pool, lp_pool=lp_pool, hp_pool=hp_pool)
+        self.filter_configurations = seibot.filter.FilterConfigurations(
+            sc_pool=sc_pool,
+            lp_pool=lp_pool,
+            hp_pool=hp_pool)
 
-        self.isolation_system = get_isolation_system(self.data)
+        self.isolation_system = self.get_isolation_system(self.data)
 
-        method = self.config.get("Evaluation", "method")
-        evaulate = seibot.evaluate.Evaluate()
-        self.evaluate_method = getattr(evaluate, method)
+        self.criterion = self.config.get("Evaluate", "criterion")
+        f = self.data.f
+        seismic_noise = self.data.seismic_noise
+        self.evaluate = seibot.evaluate.Evaluate(
+            self.isolation_system, self.filter_configurations,
+            f, seismic_noise)
+        self.evaluate_method = getattr(self.evaluate, self.criterion)
         
-    def get_isolation_performance(
-        self, f, seismic_noise, isolation_system, isolation_configuration):
-        """Get isolation performance for a configuration
-        
-        Parameters
-        ----------
-        f : array
-            Frequency array.
-        seismic_noise : array
-            The amplitude spectral density of the seismic noise.
-        isolation_system : seibot.isolation_system.IsolationSystem
-            Isolation system.
-        isolation_configration : (Filter, (Filter, Filter))
-            A isolation configuration in the form of a tuple
-            (sensor correction filter, (low-pass filter, high-pass filter)).
-        """
-        seismometer_noise = isolation_system.seismometer.noise
-        relative_sensor_noise = isolation_system.relative_sensor.noise
-        inertial_sensor_noise = isolation_system.inertial_sensor.noise
-        plant = isolation_system.plant
-        transmissivity = isolation_system.transmissivity
-        controller = isolation_system.controller
-        
-        sensor_correction_filter = isolation_configuration[0]
-        complementary_filters = isolation_configuration[1]
-        low_pass_filter = complementary_filters[0]
-        high_pass_filter = complementary_filters[1]
-
-        forecast = seibot.forecast.Forecast()
-
-        noise = forecast.get_noise(
-            f, seismic_noise, seismometer_noise,
-            relative_sensor_noise, inertial_sensor_noise
-            sensor_correction_filter,
-            low_pass_filter, high_pass_filter)
-
-        disturbance = forecast.get_disturbance(
-            f, seismic_noise, transmissivity)
-
-        displacement = forecast.get_displacement(
-            f, disturbance, noise, plant, controller)
-        
-        return displacement
-        
-
     def get_isolation_system(self, data):
         """Construct an isolation system instance from a data instance
         
@@ -137,11 +101,23 @@ class Seibot:
         isolation_system = seibot.isolation_system.IsolationSystem(
             relative_sensor=relative_sensor,
             inertial_sensor=inertial_sensor,
-            seismometer=seismoemter,
+            seismometer=seismometer,
             plant=plant,
             transmissivity=transmissivity,
             controller=controller,
         )
 
         return isolation_system
+    
+    def get_best_filters(self):
+        """Get best filters
+        
+        Returns
+        -------
+        best_filters : dict
+            Dictionary with keys
+            ["sensor correction filter", "low pass filter", "high pass filter"]
+        """
+        best_filters = self.evaluate_method()
+        return best_filters
 
