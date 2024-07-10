@@ -121,3 +121,37 @@ class Seibot:
         best_filters = self.evaluate_method()
         return best_filters
 
+    def export_best_filters(self, path):
+        """Export best filters into path
+        
+        Parameters
+        ----------
+        path : str
+            The path of the output configuration file.
+        """
+        best_filters = self.get_best_filters()
+        sc = best_filters["sensor correction filter"]
+        lp = best_filters["low pass filter"]
+        hp = best_filters["high pass filter"]
+
+        config = configparser.ConfigParser()
+        config["Sensor correction filter"] = {
+            "filter_file": sc.filter_file,
+            "module": sc.module,
+            "fm": sc.fm
+        }
+        config["Low pass filter"] = {
+            "filter_file": lp.filter_file,
+            "module": lp.module,
+            "fm": lp.fm
+        }
+        config["High pass filter"] = {
+            "filter_file": hp.filter_file,
+            "module": hp.module,
+            "fm": hp.fm
+        }
+
+        with open(path, "w") as file:
+            config.write(file)
+
+
