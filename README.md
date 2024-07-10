@@ -3,7 +3,9 @@
 Semi-adaptive seismic isolation control framework for LIGO
 
 **Table of content**
+- [Introduction](#introduction)
 - [Installation](#installation)
+- [Step-by-step tutorial](#step-by-step-tutorial)
 - [Usage](#usage)
 	- [Command line](#command-line)
 	- [Python scripting](#python-scripting)
@@ -16,6 +18,22 @@ Semi-adaptive seismic isolation control framework for LIGO
 	- [Model parameters configuration](#model-parameters-configuration)
 - [Seibot output file](#seibot-output-file)
 - [Repository structure](#repository-structure)
+
+# Introduction
+`Seibot` is a Python package that defines a real-time optimal control
+filter selection framework, i.e. semi-adaptive control,
+for seismic isolation systems at LIGO.
+In a nutshell, `Seibot` does the followings
+
+1. Fetch real-time seismic and isolation system data using CDSutils.
+2. Model seismic noises, sensor noises, and system dynamics.
+3. Compile all available sensor correction and sensor fusion
+   complementary filters, i.e. blends, from Foton.
+4. Predict the all possible real-time seismic isolation performances
+   using all combinations of sensor correction and blends.
+5. Select the best combination of filters base on some optimal criteria.
+6. Inform the best filters by outputing a configuration file.
+
 # Installation
 
 ## Create conda environment and install dependencies
@@ -41,6 +59,9 @@ Install using `pip`
 ```
 pip install .
 ```
+
+# Step-by-step tutorial
+
 
 # Usage
 
