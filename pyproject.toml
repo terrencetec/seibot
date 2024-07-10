@@ -29,3 +29,6 @@ py-modules = ["__init__"]
 [project.urls]
 Homepage = "https://github.com/terrencetec/seibot"
 Issues = "https://github.com/terrencetec/seibot/issues"
+
+[project.scripts]
+seibot = "seibot:cmd.main"
