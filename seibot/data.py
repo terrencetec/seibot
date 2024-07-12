@@ -7,8 +7,9 @@ import numpy as np
 import scipy
 import scipy.optimize
 
-import seibot.model
 import seibot.foton
+import seibot.gps
+import seibot.model
 
 
 class Data:
@@ -44,6 +45,70 @@ class Data:
         self.config = configparser.ConfigParser(allow_no_value=True)
         self.config.optionxform = str
         self.config.read(path_config)
+
+        # Fetch all data.
+        channel_seismometer = self.config["Channels"].get("seismometer")
+        channel_seismometer_coh = self.config["Channels"].get(
+            "seismometer_coh")
+        channel_inertial_sensor = self.config["Channels"].get(
+            "inertial_sensor")
+        channel_relative_sensor = self.config["Channels"].get(
+            "relative_sensor")
+        channel_witness_sensor = self.config["Channels"].get("witness_sensor")
+
+        channel_list = [
+            channel_seismometer,
+            channel_seismometer_coh,
+            channel_inertial_sensor,
+            channel_relative_sensor,
+            channel_witness_sensor,
+        ]
+        
+        duration = self.config["CDSutils"].get("duration")
+        start = self.config["CDSutils"].get("start", fallback=None)
+
+        # Start now if not specified
+        if start is None:
+            start = seibot.gps.get_gpstime_now() - duration
+
+        # Try in case not working with LIGO workstations.
+        try:
+            time_series = self.fetch(channel_list, duration, start)
+            
+            # Unpack time series
+            ts_seismometer = time_series[0].data
+            ts_seismometer_coh = time_series[1].data
+            ts_inertial_sensor = time_series[2].data
+            ts_relative_sensor = time_series[3].data
+            ts_witness_sensor = time_series[4].data
+
+            fs_seismometer = time_series[0].sample_rate
+            fs_seismometer_coh = time_series[1].sample_rate
+            fs_inertial_sensor = time_series[2].sample_rate
+            fs_relative_sensor = time_series[3].sample_rate
+            fs_witness_sensor = time_series[4].sample_rate
+            
+            # Resample
+            fs = fs_seismometer  # Adhere to seismometer readout.
+            if fs_seismometer_coh != fs:
+                q = int(fs_seismometer_coh / fs)
+                ts_seismometer_coh = self.resample(ts_seismometer_coh, q)
+            if fs_inertial_sensor != fs:
+                q = int(fs_inertial_sensor / fs)
+                ts_inertial_sensor = self.resample(ts_inertial_sensor, q)
+            if fs_relative_Sensor != fs:
+                q = int(fs_relative_sensor / fs)
+                ts_relative_sensor = self.resample(ts_relative_sensor, q)
+            if fs_witness_sensor != fs:
+                q = int(fs_witness_sensor / fs)
+                ts_witness_sensor = self.resample(ts_witness_sensor, q)
+
+            ## TODO need to convert to attribute and have getters access them
+        except:
+            pass
+
+
+        # Resample to 
 
         # Initiallize dummy frequency axis:
         duration = self.config.getfloat("CDSutils", "duration")
