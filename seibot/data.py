@@ -602,3 +602,21 @@ class Data:
             f = f[f>0]
 
         return f, coh
+
+    def resample(self, ts, q):
+        """Down sample. scipy.signal.decimate() wrapper.
+
+        Parameters
+        ----------
+        ts : array
+            Time series.
+        q : int
+            Down sampling factor.
+
+        Returns
+        -------
+        ts : array
+            Downsampled time series
+        """
+        ts = scipy.signal.decimate(ts, ftype="fir", q=q)
+        return ts
