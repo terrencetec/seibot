@@ -128,6 +128,7 @@ class Data:
         self.f = f
 
         # Initialize attributes
+        # Use seismometer f array if exists.
         self.f, self.seismic_noise = self.get_seismic_noise()
         _, self.seismometer_noise = self.get_seismometer_noise()
         _, self.inertial_sensor_noise = self.get_inertial_sensor_noise()
