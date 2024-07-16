@@ -34,6 +34,57 @@ In a nutshell, `Seibot` does the followings
 5. Select the best combination of filters base on some optimal criteria.
 6. Inform the best filters by outputing a configuration file.
 
+These functionalities are supported by the main classes of `seibot`, namely
+
+1. `seibot.Data`
+2. `seibot.Filter`
+3. `seibot.IsolationSystem`
+4. `seibot.Evaluate`
+5. `seibot.Seibot`
+
+
+The `seibot.Data` class interfaces the CDS environment and local database to
+obtain estimates or models of seismic noise, sensor noises, and plant models
+using real-time signals.
+These information can be used to initialize `seibot.Sensor`
+and `seibot.Process` instances.
+These are attributes of a `seibot.IsolationSystem` instance defining
+an isolation system's dynamics and hardware capabilities.
+
+A `seibot.FilterConfigurations` instance is initialized with
+three `seibot.FilterPool` instances, corresponding to the pools of
+sensor correction filters, complementary low-pass filters, and complementary
+high-pass filters, which are `seibot.Filter` instances that has
+attributes identifying their whereabouts in a Foton file.
+
+The `seibot.IsolationSystem` can be installed with filter configurations,
+by calling `seibot.FilterConfigurations(i, j)`, which fully defines
+the active isolation performance of the system.
+The `seibot.IsolationSystem.get_displacement()` method can then be called
+to obtain an estimate of the amplitude spectral density of the isolation
+platform given an amplitude spectral density of the seismic noise.
+
+The `seibot.Evaluate` class is initialized with a pair of
+`seibot.IsolationSystem` and `seibot.FilterConfigurations` instances.
+And it contains internal methods that automatically select the
+best filter configurations at the real-time seismic condition according
+to some pre-defined criteria.
+
+Finally, the `seibot.Seibot` is a high-level class that wraps around
+all the above basic functionalities and makes `seibot` extremely easy to use.
+The `seibot.Seibot` is initialized by a
+[Seibot configuration](#seibot-configuration), and
+the best filters can be obtained by the method
+`seibot.Seibot.get_best_filters()`.
+Alternatively, `seibot.Seibot.export_best_filters()` exports
+an [Seibot output file](#seibot-output-file) that and external program, such
+as Guardian, can parse and make real-time changes to achieve
+semi-adaptive seismic isolation control.
+
+To setup `seibot` properly, be sure to check out the
+[Step-by-step tutorial](#step-by-step-tutorial) and the [Usage](#usage)
+sections.
+
 # Installation
 
 ## Create conda environment and install dependencies
@@ -62,6 +113,11 @@ pip install .
 
 # Step-by-step tutorial
 
+## Install Seibot
+Follow [Installation](#installation) on how to install `Seibot` in a conda
+environment.
+
+## Set up configuration files.
 
 # Usage
 
