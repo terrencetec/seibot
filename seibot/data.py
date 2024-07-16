@@ -95,7 +95,7 @@ class Data:
         if fs_inertial_sensor != fs:
             q = int(fs_inertial_sensor / fs)
             ts_inertial_sensor = self.resample(ts_inertial_sensor, q)
-        if fs_relative_Sensor != fs:
+        if fs_relative_sensor != fs:
             q = int(fs_relative_sensor / fs)
             ts_relative_sensor = self.resample(ts_relative_sensor, q)
         if fs_witness_sensor != fs:
