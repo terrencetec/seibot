@@ -237,7 +237,7 @@ class Data:
         dynamic = self.config["Inertial sensor"].getboolean("dynamic")
 
         if dynamic:
-            f, inertial_asd = self.model_inertial_asd()
+            f, inertial_asd = self.dynamic_inertial_asd()
         else:
             f, inertial_asd = self.get_modeled("Inertial sensor")
 
@@ -368,7 +368,7 @@ class Data:
         dynamic = self.config.getboolean("Seismometer", "dynamic")
 
         if dynamic:
-            f, seismometer_asd = self.dynamic_seismometer_noise()
+            f, seismometer_asd = self.dynamic_seismometer_asd()
             # seismometer_chan = self.config.get("Channels", "seismometer")
             # seismometer_coh_chan = self.config.get("Channels", "seismometer_coh")
             # f, seismic_asd = self.get_asd(channel=seismometer_chan)
