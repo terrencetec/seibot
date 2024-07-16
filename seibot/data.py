@@ -544,7 +544,7 @@ class Data:
         f, inertial_asd = self.ts2asd(
             self.ts_inertial_sensor, self.fs, nperseg)
         _, coh = self.ts2coh(
-            self.ts_inertial_sensor, self,ts_seismometer_coh, self.fs, nperseg)
+            self.ts_inertial_sensor, self.ts_seismometer_coh, self.fs, nperseg)
         
         f, seismic_asd = self.ts2asd(self.ts_seismometer, self.fs, nperseg)
         _, sts_coh = self.ts2coh(
