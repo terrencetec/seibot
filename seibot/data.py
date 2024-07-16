@@ -691,10 +691,11 @@ class Data:
 
         f, psd = scipy.signal.welch(ts, fs=fs, nperseg=nperseg)
 
+        asd = psd**.5
+
         if not return_zero_frequency:
             asd = asd[f>0]
             f = f[f>0]
-        asd = psd**.5
 
         return f, asd
 
