@@ -64,8 +64,8 @@ class Data:
             channel_witness_sensor,
         ]
         
-        duration = self.config["CDSutils"].get("duration")
-        start = self.config["CDSutils"].get("start", fallback=None)
+        duration = self.config["CDSutils"].getfloat("duration")
+        start = self.config["CDSutils"].getfloat("start", fallback=None)
 
         # Start now if not specified
         if start is None:
