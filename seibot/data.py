@@ -291,7 +291,7 @@ class Data:
         transmissivity : TransferFunction
             The frequency response of the transmissivity
         """
-        dynamic = self.config["transmissivity"].getboolean("dynamic")
+        dynamic = self.config["Transmissivity"].getboolean("dynamic")
         
         if dynamic:
             f, transmissivity = self.model_transmissivity()
