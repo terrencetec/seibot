@@ -769,7 +769,7 @@ class Data:
         coh : array
             Coherence function
         """
-        nperseg = self.config.["Welch"].getint("nperseg")
+        nperseg = self.config["Welch"].getint("nperseg")
 
         f, coh = scipy.signal.coherence(x=ts1, y=ts2, fs=fs, nperseg=nperseg)
 
