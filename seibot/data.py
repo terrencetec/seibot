@@ -543,20 +543,39 @@ class Data:
 
         f, inertial_asd = self.ts2asd(
             self.ts_inertial_sensor, self.fs, nperseg)
-        f, coh = self.ts2coh(
+        _, coh = self.ts2coh(
             self.ts_inertial_sensor, self,ts_seismometer_coh, self.fs, nperseg)
+        
+        f, seismic_asd = self.ts2asd(self.ts_seismometer, self.fs, nperseg)
+        _, sts_coh = self.ts2coh(
+            self.ts_seismometer, self.ts_seismometer_coh, self.fs, nperseg)
 
-        # Calibrate
+        # Calibrate seismic spectrum to displacement unit.
+        calibration = self.config["Calibration"].get("seismometer")
+        inv_filter = seibot.filter.InverseFilters()
+        cal_filter = getattr(inv_filter, calibration)
+        seismic_asd = seismic_asd * abs(cal_filter(1j*2*np.pi*f))
+        seismic_asd = seismic_asd * 1e-9  # From nm to m. TODO avoid hardcode.
+
+        cutoff_i = self._get_seismometer_cutoff(seismic_asd, sts_coh)
+
+        # Calibrate inertial sensor
         calibration = self.config["Calibration"].get("inertial_sensor")
         inv_filter = seibot.filter.InverseFilters()
         cal_filter = getattr(inv_filter, calibration)
         inertial_asd = inertial_asd * abs(cal_filter(1j*2*np.pi*f))
         inertial_asd = inertial_asd * 1e-9  # From nm to m.TODO avoid hardcode.
 
-        rounded_coh = np.round(coh, 2)
-        pass
-        ...
-        # TODO Unfinished code 
+        coh = np.round(coh, 2)
+        mask = (coh < 0.2) * (f < f[cutoff_i])
+        for i in range(len(mask)):
+            if np.sum(mask[i:]) == 0:
+                mask[:i] = 1
+                break
+        inv_mask = mask == 0
+        
+        model = self.get_modeled("inertial_sensor")
+        inertial_asd = inertial_asd*mask + model*inv_mask
 
         # v copied from Sushant's branch.
         # rounded_coh = np.round(coh, 2)
