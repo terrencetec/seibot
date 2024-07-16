@@ -574,7 +574,7 @@ class Data:
                 break
         inv_mask = mask == 0
         
-        model = self.get_modeled("inertial_sensor")
+        model = self.get_modeled("Inertial sensor")
         inertial_asd = inertial_asd*mask + model*inv_mask
 
         # v copied from Sushant's branch.
