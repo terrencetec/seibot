@@ -219,7 +219,7 @@ class InverseFilters:
         s = control.tf("s")
         wn = 1*2*np.pi  # resonance at 1 Hz
         q = 1/np.sqrt(2)  # q at 0.707
-        inverse = 1/s**3 * (s**2 + wn/q*s + wn**2)
+        inverse = (s**2 + wn/q*s + wn**2)/s**3
 
         return inverse
 
