@@ -518,7 +518,7 @@ class Data:
         seismic_asd = seismic_asd * abs(cal_filter(1j*2*np.pi*f))
         seismic_asd = seismic_asd * 1e-9  # From nm to m. TODO avoid hardcode.
 
-        cutoff_i = self._get_seismometer_cutoff(seismic_asd, coherence)
+        cutoff_i = self._get_seismometer_cutoff(seismic_asd, coh)
         # v TODO avoid Hardcode 0.01 
         f_mask = (f>0.01) * (f<f[cutoff_i])
         seismometer_noise = seismic_asd[f_mask]
