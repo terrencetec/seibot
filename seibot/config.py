@@ -29,7 +29,7 @@ def get_seibot_config(path):
         "dynamic": "False"
     }
     config["Seismometer"] = {
-        "model": "noise2",
+        "model": "noise1",
         "parameters_path": "../model_parameters/sts.txt",
         "dynamic": "False"
     }

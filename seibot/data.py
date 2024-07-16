@@ -103,17 +103,24 @@ class Data:
                 q = int(fs_witness_sensor / fs)
                 ts_witness_sensor = self.resample(ts_witness_sensor, q)
 
-            ## TODO need to convert to attribute and have getters access them
+            ## Convert to attribute and have getters access them
+
+            self.ts_seismometer = ts_seismometer
+            self.ts_seismometer_coh = ts_seismometer_coh
+            self.ts_inertial_sensor = ts_inertial_sensor
+            self.ts_relative_sensor = ts_relative_sensor
+            self.ts_witness_sensor = ts_witness_sensor
+
+            self.fs = fs
         except:
             pass
 
 
-        # Resample to 
-
         # Initiallize dummy frequency axis:
         duration = self.config.getfloat("CDSutils", "duration")
         nperseg = self.config.getint("Welch", "nperseg")
-        fs = self.config.getfloat("Welch", "fs")
+        if self.fs is None:
+            self.fs = self.config.getfloat("Welch", "fs")
         n_data = int(fs * duration)
         data = np.random.normal(loc=0, scale=1, size=n_data)
         f, _ = scipy.signal.welch(data, fs=fs, nperseg=nperseg)
@@ -121,7 +128,7 @@ class Data:
         self.f = f
 
         # Initialize attributes
-        _, self.seismic_noise = self.get_seismic_noise()
+        self.f, self.seismic_noise = self.get_seismic_noise()
         _, self.seismometer_noise = self.get_seismometer_noise()
         _, self.inertial_sensor_noise = self.get_inertial_sensor_noise()
         _, self.relative_sensor_noise = self.get_relative_sensor_noise()
@@ -129,6 +136,16 @@ class Data:
         _, self.transmissivity = self.get_transmissivity()
         _, self.controller = self.get_controller()
         
+    @property
+    def fs(self):
+        """Sample rate"""
+        return self._fs
+
+    @fs.setter
+    def fs(self, _fs):
+        """Sample rate setter"""
+        self._fs = _fs
+
     @property
     def f(self):
         """Frequency array"""
@@ -219,7 +236,12 @@ class Data:
         inertial_asd : array
             Amplitude spectral density of the inertial sensor noise.
         """
-        f, inertial_asd = self.get_modeled("Inertial sensor")
+        dynamic = self.config["Inertial sensor"].getboolean("dynamic")
+
+        if dynamic:
+            f, inertial_asd = self.model_inertial_asd()
+        else:
+            f, inertial_asd = self.get_modeled("Inertial sensor")
 
         return f, inertial_asd
 
@@ -233,7 +255,12 @@ class Data:
         relative_asd : array
             Amplitude spectral density of the inertial sensor noise.
         """
-        f, relative_asd = self.get_modeled("Relative sensor")
+        dynamic = self.config["Relative sensor"].getboolean("dynamic")
+        
+        if dynamic:
+            f, relative_asd = self.model_relative_asd()
+        else:
+            f, relative_asd = self.get_modeled("Relative sensor")
 
         return f, relative_asd
 
@@ -247,7 +274,12 @@ class Data:
         plant : TransferFunction
             The frequency response of the plant.
         """
-        f, plant = self.get_modeled("Plant")
+        dynamic = self.config["Plant"].getboolean("dynamic")
+
+        if dynamic:
+            f, plant = self.model_plant()
+        else:
+            f, plant = self.get_modeled("Plant")
 
         return f, plant
 
@@ -261,7 +293,12 @@ class Data:
         transmissivity : TransferFunction
             The frequency response of the transmissivity
         """
-        f, transmissivity = self.get_modeled("Transmissivity")
+        dynamic = self.config["transmissivity"].getboolean("dynamic")
+        
+        if dynamic:
+            f, transmissivity = self.model_transmissivity()
+        else:
+            f, transmissivity = self.get_modeled("Transmissivity")
 
         return f, transmissivity
 
@@ -300,18 +337,20 @@ class Data:
         """
         dynamic = self.config.getboolean("Seismic", "dynamic")
         if dynamic:
-            # Parse config
-            seismometer_chan = self.config.get("Channels", "seismometer")
-            seismometer_coh_chan = self.config.get("Channels", "seismometer_coh")
-            f, seismic_asd = self.get_asd(channel=seismometer_chan)
-            _, seismic_coh_asd = self.get_asd(channel=seismometer_coh_chan)
-            _, coherence = self.get_coh(channel1=seismometer_chan,
-                                     channel2=seismometer_coh_chan)
+            f, seismic_asd = self.dynamic_seismic_asd()
 
-            # v TODO Warning: hardcode calibration
-            seismic_asd *= 1/(2*np.pi*f) * 1e-9  # to displacement in meters
+#             # Parse config
+#             seismometer_chan = self.config.get("Channels", "seismometer")
+#             seismometer_coh_chan = self.config.get("Channels", "seismometer_coh")
+#             f, seismic_asd = self.get_asd(channel=seismometer_chan)
+#             _, seismic_coh_asd = self.get_asd(channel=seismometer_coh_chan)
+#             _, coherence = self.get_coh(channel1=seismometer_chan,
+#                                      channel2=seismometer_coh_chan)
 
-            seismic_asd = self.pad_seismic_noise(seismic_asd, coherence)
+#             # v TODO Warning: hardcode calibration
+#             seismic_asd *= 1/(2*np.pi*f) * 1e-9  # to displacement in meters
+
+#             seismic_asd = self.pad_seismic_noise(seismic_asd, coherence)
         else:
             f, seismic_asd = self.get_modeled("Seismic")
             seismic_asd = abs(seismic_asd(1j*2*np.pi*f))
@@ -329,26 +368,28 @@ class Data:
             Amplitude spectral density of the seismometer noise.
         """
         dynamic = self.config.getboolean("Seismometer", "dynamic")
+
         if dynamic:
-            seismometer_chan = self.config.get("Channels", "seismometer")
-            seismometer_coh_chan = self.config.get("Channels", "seismometer_coh")
-            f, seismic_asd = self.get_asd(channel=seismometer_chan)
-            _, seismic_coh_asd = self.get_asd(channel=seismometer_coh_chan)
-            _, coherence = self.get_coh(channel1=seismometer_chan,
-                                     channel2=seismometer_coh_chan)
+            f, seismometer_asd = self.dynamic_seismometer_noise()
+            # seismometer_chan = self.config.get("Channels", "seismometer")
+            # seismometer_coh_chan = self.config.get("Channels", "seismometer_coh")
+            # f, seismic_asd = self.get_asd(channel=seismometer_chan)
+            # _, seismic_coh_asd = self.get_asd(channel=seismometer_coh_chan)
+            # _, coherence = self.get_coh(channel1=seismometer_chan,
+            #                          channel2=seismometer_coh_chan)
 
-            # v TODO Warning: hardcode calibration
-            seismic_asd *= 1/(2*np.pi*f) * 1e-9  # to displacement in meters
+            # # v TODO Warning: hardcode calibration
+            # seismic_asd *= 1/(2*np.pi*f) * 1e-9  # to displacement in meters
             
-            cutoff_i = self._get_seismometer_cutoff(seismic_asd, coherence)
-            # v Hardcode 0.01 
-            f_mask = (f>0.01) * (f<f[cutoff_i])
-            seismometer_noise = seismic_asd[f_mask]
+            # cutoff_i = self._get_seismometer_cutoff(seismic_asd, coherence)
+            # # v Hardcode 0.01 
+            # f_mask = (f>0.01) * (f<f[cutoff_i])
+            # seismometer_noise = seismic_asd[f_mask]
             
-            # Fit
-            param = self.fit_seismometer_noise(f[f_mask], seismometer_noise)
+            # # Fit
+            # param = self.fit_seismometer_noise(f[f_mask], seismometer_noise)
 
-            seismometer_asd = self._seismometer_noise_model(f, *param)
+            # seismometer_asd = self._seismometer_noise_model(f, *param)
         else:
             f, seismometer_asd = self.get_modeled("Seismometer")        
 
@@ -392,8 +433,8 @@ class Data:
 
         Returns
         -------
-        param : array
-            The parameters for the model.
+        array
+            The amplitude spectral density of the modeled seismometer noise.
         """
         # Parse
         model_name = self.config.get("Seismometer", "model")
@@ -406,7 +447,7 @@ class Data:
         param, _ = scipy.optimize.curve_fit(model_method,
                                             xdata=f,
                                             ydata=seismometer_noise)
-        return param
+        return model_method(f, *params)
 
     def pad_seismic_noise(self, seismic_asd, coherence):
         """Edge-pad seismometer noise from seismic noise readout
@@ -428,6 +469,144 @@ class Data:
         seismic_asd[:cutoff_i] = seismic_asd[cutoff_i]  # Edge-pad noises.
         
         return seismic_asd
+
+    def dynamic_seismic_asd(self):
+        """Estimate dynamic seismic noise asd
+        
+        Returns
+        -------
+        f : array
+            Frequency array.
+        seismic_asd : array
+            Amplitude spectral density of the seismic noise.
+        """
+        nperseg = self.config["Welch"].getint("nperseg")
+
+        f, seismic_asd = self.ts2asd(self.ts_seismometer, self.fs, nperseg)
+        _, coh = self.ts2coh(
+            self.ts_seismometer, self.ts_seismometer_coh, self.fs, nperseg)
+
+        # Calibrate spectrum to displacement unit.
+        calibration = self.config["Calibration"]["seismometer"]
+        inv_filter = seibot.filter.InverseFilters()
+        cal_filter = getattr(inv_filter, calibration)
+        seismic_asd = seismic_asd * abs(cal_filter(1j*2*np.pi*f))
+        seismic_asd = seismic_asd * 1e-9  # From nm to m. TODO avoid hardcode.
+
+        seismic_asd = self.pad_seismic_noise(seismic_asd, coh)
+
+        return f, seismic_asd
+
+    def dynamic_seismometer_asd(self):
+        """Estimate dynamic seismometer noise
+        
+        Returns
+        -------
+        f : array
+            Frequency array.
+        seismometer_asd : array
+            Amplitude spectral density of the seismometer noise.
+        """
+        nperseg = self.config["Welch"].getint("nperseg")
+
+        f, seismic_asd = self.ts2asd(self.ts_seismometer, self.fs, nperseg)
+        _, coh = self.ts2coh(
+            self.ts_seismometer, self.ts_seismometer_coh, self.fs, nperseg)
+
+        # Calibrate spectrum to displacement unit.
+        calibration = self.config["Calibration"].get("seismometer")
+        inv_filter = seibot.filter.InverseFilters()
+        cal_filter = getattr(inv_filter, calibration)
+        seismic_asd = seismic_asd * abs(cal_filter(1j*2*np.pi*f))
+        seismic_asd = seismic_asd * 1e-9  # From nm to m. TODO avoid hardcode.
+
+        cutoff_i = self._get_seismometer_cutoff(seismic_asd, coherence)
+        # v TODO avoid Hardcode 0.01 
+        f_mask = (f>0.01) * (f<f[cutoff_i])
+        seismometer_noise = seismic_asd[f_mask]
+        
+        # Fit
+        seismometer_asd = self.fit_seismometer_noise(
+            f[f_mask], seismometer_noise)
+
+        return f, seismometer_asd
+
+    def dynamic_inertial_asd(self):
+        """Estimate dynamic inertial sensor noise.
+
+        Returns
+        -------
+        f : array
+            Frequency array
+        inertial_asd : array
+            Amplitude spectral density of the inertial sensor noise.
+        """
+        nperseg = self.config["Welch"].getint("nperseg")
+
+        f, inertial_asd = self.ts2asd(
+            self.ts_inertial_sensor, self.fs, nperseg)
+        f, coh = self.ts2coh(
+            self.ts_inertial_sensor, self,ts_seismometer_coh, self.fs, nperseg)
+
+        # Calibrate
+        calibration = self.config["Calibration"].get("inertial_sensor")
+        inv_filter = seibot.filter.InverseFilters()
+        cal_filter = getattr(inv_filter, calibration)
+        inertial_asd = inertial_asd * abs(cal_filter(1j*2*np.pi*f))
+        inertial_asd = inertial_asd * 1e-9  # From nm to m.TODO avoid hardcode.
+
+        rounded_coh = np.round(coh, 2)
+        pass
+        ...
+        # TODO Unfinished code 
+
+        # v copied from Sushant's branch.
+        # rounded_coh = np.round(coh, 2)
+        # upper_limit = np.min(np.where(asd_ham8_gs13.frequencies.value == cutoff))
+        # last_low_coh = np.max(np.where(rounded_coh[0:upper_limit] < 0.2))
+        # frequency = asd_ham8_gs13.frequencies[last_low_coh]
+        # freq_used =  asd_ham8_gs13.frequencies.value[1:]
+        # print(freq_used)
+        # upper = np.max(np.where(freq_used == frequency.value))
+        # new_gs13 = np.concatenate((asd_ham8_gs13.value[0:upper], n_gs13[upper:]), axis=0)
+        return f, inertial_asd
+
+    def dynamic_relative_asd(self):
+        """Estimate dynamic relative sensor.
+
+        Returns
+        -------
+        f : array
+            Frequency array
+        relative_asd : array
+            Amplitude spectral density of the relative sensor noise.
+        """
+        raise ValueError("Dynamic relative sensor noise is not supported.")
+
+    def dynamic_plant(self):
+        """Estimate dynamic plant.
+
+        Returns
+        -------
+        f : array
+            Frequency array
+        plant : control.TransferFunction
+            Transfer function of the plant.
+        """
+        raise ValueError("Dynamic plant is not supported.")
+
+    def dynamic_transmissivity(self):
+        """Estimate dynamic transmissivity
+
+        Returns
+        -------
+        f : array
+            Frequency array
+        transmissivity : control.TransferFunction
+            Transfer function of the transmissivity.
+        """
+        raise ValueError("Dynamic transmissivity is not supported.")
+
 
     def get_modeled(self, instrument):
         """Get modeled spectrum/frequency response
@@ -486,7 +665,7 @@ class Data:
 
         return time_series
 
-    def ts2asd(self, ts, fs, nperseg=None):
+    def ts2asd(self, ts, fs, nperseg=None, return_zero_frequency=False):
         """Time series to amplitude spectral density
         
         Parameters
@@ -498,6 +677,9 @@ class Data:
         nperseg : int, optional
             Length of each segment. Passed to ``scipy.signal.welch()''.
             Defaults to taking 1024 seconds of data.
+        return_zero_frequency : bool
+            Return frequency spectrum at 0 Hz.
+            Defaults `False`.
         
         Returns
         -------
@@ -510,90 +692,84 @@ class Data:
             nperseg = int(fs*1024)  # Defaults to 1024 seconds ~0.001 Hz
 
         f, psd = scipy.signal.welch(ts, fs=fs, nperseg=nperseg)
+
+        if not return_zero_frequency:
+            asd = asd[f>0]
+            f = f[f>0]
         asd = psd**.5
 
         return f, asd
 
-    def get_asd(self, channel, return_zero_frequency=False):
-        """ Get an amplitude spectral density from a readout of a given channel
+    # def get_asd(self, channel, return_zero_frequency=False):
+    #     """ Get an amplitude spectral density from a readout of a given channel
+
+    #     Parameters
+    #     ----------
+    #     channel : str
+    #         The readout channel.
+    #     return_zero_frequency : bool
+    #         Return frequency spectrum at 0 Hz.
+    #         Defaults `False`.
+
+    #     Returns
+    #     -------
+    #     f : array
+    #         Frequency array
+    #     asd : array
+    #         The amplitude spectral density
+    #     """
+    #     # CDSutils setup
+    #     duration = self.config.getfloat("CDSutils", "duration")
+    #     start = self.config.getfloat("CDSutils", "start", fallback=None)
+        
+    #     # scipy.signal.welch setup
+    #     nperseg = self.config.getint("Welch", "nperseg")
+
+    #     # Get spectrum
+    #     time_series = self.fetch(channel, duration=duration, start=start)
+        
+    #     # TODO resampling
+
+    #     ts = time_series.data
+    #     fs = time_series.sample_rate
+
+    #     # Welch
+    #     f, asd = self.ts2asd(ts=ts, fs=fs, nperseg=nperseg)
+
+    #     # Filters out 0 Hz
+    #     if not return_zero_frequency:
+    #         asd = asd[f>0]
+    #         f = f[f>0]
+
+    #     return f, asd
+
+    def ts2coh(self, ts1, ts2, fs, nperseg=None, return_zero_frequency=False):
+        """ Returns coherence function of two signals.
 
         Parameters
         ----------
-        channel : str
-            The readout channel.
+        ts1 : array
+            Time series 1.
+        ts2 : array
+            Time series 2
+        fs : float
+            Sampling frequency.
+        nperseg : int, optional
+            Length of each segment. Passed to ``scipy.signal.welch()''.
+            Defaults to taking 1024 seconds of data.
         return_zero_frequency : bool
             Return frequency spectrum at 0 Hz.
             Defaults `False`.
-
+        
         Returns
         -------
         f : array
-            Frequency array
-        asd : array
-            The amplitude spectral density
+            Frequency axis.
+        coh : array
+            Coherence function
         """
-        # CDSutils setup
-        duration = self.config.getfloat("CDSutils", "duration")
-        start = self.config.getfloat("CDSutils", "start", fallback=None)
-        
-        # scipy.signal.welch setup
-        nperseg = self.config.getint("Welch", "nperseg")
+        nperseg = self.config.["Welch"].getint("nperseg")
 
-        # Get spectrum
-        time_series = self.fetch(channel, duration=duration, start=start)
-        
-        # TODO resampling
-
-        ts = time_series.data
-        fs = time_series.sample_rate
-
-        # Welch
-        f, asd = self.ts2asd(ts=ts, fs=fs, nperseg=nperseg)
-
-        # Filters out 0 Hz
-        if not return_zero_frequency:
-            asd = asd[f>0]
-            f = f[f>0]
-
-        return f, asd
-
-    def get_coh(self, channel1, channel2, return_zero_frequency=False):
-        """ Get coherence function from two readouts
-
-        Parameters
-        ----------
-        channel1 : str
-            The readout channel1.
-        channel2 : str
-            The readout channel2.
-        return_zero_frequency : bool
-            Return frequency spectrum at 0 Hz.
-            Defaults `False`.
-
-        Returns
-        -------
-        f : array
-            Frequency array
-        asd : array
-            The amplitude spectral density
-        """
-        # CDSutils setup
-        # v Replace this with properties.
-        duration = self.config.getfloat("CDSutils", "duration")
-        start = self.config.getfloat("CDSutils", "start", fallback=None)
-        
-        # scipy.signal.welch setup
-        nperseg = self.config.getint("Welch", "nperseg")
-
-        # Get spectrum
-        time_series1 = self.fetch(channel1, duration=duration, start=start)
-        time_series2 = self.fetch(channel2, duration=duration, start=start)
-
-        ts1 = time_series1.data
-        ts2 = time_series2.data
-        fs = time_series1.sample_rate
-        
-        # coherence
         f, coh = scipy.signal.coherence(x=ts1, y=ts2, fs=fs, nperseg=nperseg)
 
         # Filters out 0 Hz
@@ -602,6 +778,52 @@ class Data:
             f = f[f>0]
 
         return f, coh
+
+    # def get_coh(self, channel1, channel2, return_zero_frequency=False):
+    #     """ Get coherence function from two readouts
+
+    #     Parameters
+    #     ----------
+    #     channel1 : str
+    #         The readout channel1.
+    #     channel2 : str
+    #         The readout channel2.
+    #     return_zero_frequency : bool
+    #         Return frequency spectrum at 0 Hz.
+    #         Defaults `False`.
+
+    #     Returns
+    #     -------
+    #     f : array
+    #         Frequency array
+    #     asd : array
+    #         The amplitude spectral density
+    #     """
+    #     # CDSutils setup
+    #     # v Replace this with properties.
+    #     duration = self.config.getfloat("CDSutils", "duration")
+    #     start = self.config.getfloat("CDSutils", "start", fallback=None)
+        
+    #     # scipy.signal.welch setup
+    #     nperseg = self.config.getint("Welch", "nperseg")
+
+    #     # Get spectrum
+    #     time_series1 = self.fetch(channel1, duration=duration, start=start)
+    #     time_series2 = self.fetch(channel2, duration=duration, start=start)
+
+    #     ts1 = time_series1.data
+    #     ts2 = time_series2.data
+    #     fs = time_series1.sample_rate
+        
+    #     # coherence
+    #     f, coh = scipy.signal.coherence(x=ts1, y=ts2, fs=fs, nperseg=nperseg)
+
+    #     # Filters out 0 Hz
+    #     if not return_zero_frequency:
+    #         coh = coh[f>0]
+    #         f = f[f>0]
+
+    #     return f, coh
 
     def resample(self, ts, q):
         """Down sample. scipy.signal.decimate() wrapper.
