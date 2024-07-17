@@ -71,46 +71,53 @@ class Data:
         if start is None:
             start = seibot.gps.get_gpstime_now() - duration
 
+        self.fs = None
+
+        try:
         # Try in case not working with LIGO workstations.
-        time_series = self.fetch(channel_list, duration, start)
-        
-        # Unpack time series
-        ts_seismometer = time_series[0].data
-        ts_seismometer_coh = time_series[1].data
-        ts_inertial_sensor = time_series[2].data
-        ts_relative_sensor = time_series[3].data
-        ts_witness_sensor = time_series[4].data
+            time_series = self.fetch(channel_list, duration, start)
+            
+            # Unpack time series
+            ts_seismometer = time_series[0].data
+            ts_seismometer_coh = time_series[1].data
+            ts_inertial_sensor = time_series[2].data
+            ts_relative_sensor = time_series[3].data
+            ts_witness_sensor = time_series[4].data
 
-        fs_seismometer = time_series[0].sample_rate
-        fs_seismometer_coh = time_series[1].sample_rate
-        fs_inertial_sensor = time_series[2].sample_rate
-        fs_relative_sensor = time_series[3].sample_rate
-        fs_witness_sensor = time_series[4].sample_rate
-        
-        # Resample
-        fs = fs_seismometer  # Adhere to seismometer readout.
-        if fs_seismometer_coh != fs:
-            q = int(fs_seismometer_coh / fs)
-            ts_seismometer_coh = self.resample(ts_seismometer_coh, q)
-        if fs_inertial_sensor != fs:
-            q = int(fs_inertial_sensor / fs)
-            ts_inertial_sensor = self.resample(ts_inertial_sensor, q)
-        if fs_relative_sensor != fs:
-            q = int(fs_relative_sensor / fs)
-            ts_relative_sensor = self.resample(ts_relative_sensor, q)
-        if fs_witness_sensor != fs:
-            q = int(fs_witness_sensor / fs)
-            ts_witness_sensor = self.resample(ts_witness_sensor, q)
+            fs_seismometer = time_series[0].sample_rate
+            fs_seismometer_coh = time_series[1].sample_rate
+            fs_inertial_sensor = time_series[2].sample_rate
+            fs_relative_sensor = time_series[3].sample_rate
+            fs_witness_sensor = time_series[4].sample_rate
+            
+            # Resample
+            fs = fs_seismometer  # Adhere to seismometer readout.
+            if fs_seismometer_coh != fs:
+                q = int(fs_seismometer_coh / fs)
+                ts_seismometer_coh = self.resample(ts_seismometer_coh, q)
+            if fs_inertial_sensor != fs:
+                q = int(fs_inertial_sensor / fs)
+                ts_inertial_sensor = self.resample(ts_inertial_sensor, q)
+            if fs_relative_sensor != fs:
+                q = int(fs_relative_sensor / fs)
+                ts_relative_sensor = self.resample(ts_relative_sensor, q)
+            if fs_witness_sensor != fs:
+                q = int(fs_witness_sensor / fs)
+                ts_witness_sensor = self.resample(ts_witness_sensor, q)
 
-        ## Convert to attribute and have getters access them
+            ## Convert to attribute and have getters access them
 
-        self.ts_seismometer = ts_seismometer
-        self.ts_seismometer_coh = ts_seismometer_coh
-        self.ts_inertial_sensor = ts_inertial_sensor
-        self.ts_relative_sensor = ts_relative_sensor
-        self.ts_witness_sensor = ts_witness_sensor
+            self.ts_seismometer = ts_seismometer
+            self.ts_seismometer_coh = ts_seismometer_coh
+            self.ts_inertial_sensor = ts_inertial_sensor
+            self.ts_relative_sensor = ts_relative_sensor
+            self.ts_witness_sensor = ts_witness_sensor
 
-        self.fs = fs
+            self.fs = fs
+
+        except:
+            print("CDS error")
+
 
 
         # Initiallize dummy frequency axis:
@@ -118,9 +125,9 @@ class Data:
         nperseg = self.config.getint("Welch", "nperseg")
         if self.fs is None:
             self.fs = self.config.getfloat("Welch", "fs")
-        n_data = int(fs * duration)
+        n_data = int(self.fs * duration)
         data = np.random.normal(loc=0, scale=1, size=n_data)
-        f, _ = scipy.signal.welch(data, fs=fs, nperseg=nperseg)
+        f, _ = scipy.signal.welch(data, fs=self.fs, nperseg=nperseg)
         f = f[1:]  # Remove DC
         self.f = f
 
