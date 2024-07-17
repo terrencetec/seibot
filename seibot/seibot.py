@@ -48,7 +48,7 @@ class Seibot:
         lp_inverse = self.config.get("Low pass filters",
                                      "inverse_filter", fallback="none")
         hp_config = self.config.get("High pass filters", "config")
-        hp_inverse = self.config.get("Sensor correction filters",
+        hp_inverse = self.config.get("High pass filters",
                                      "inverse_filter", fallback="none")
         
         inverse_filters = seibot.filter.InverseFilters()
