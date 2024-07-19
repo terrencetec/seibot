@@ -42,7 +42,7 @@ These functionalities are supported by the main classes of `seibot`, namely
 4. `seibot.Evaluate`
 5. `seibot.Seibot`
 
-
+![](https://github.com/terrencetec/seibot/blob/0c3cca83396ed06fdb766438cb6953c8fdadb1e1/images/flowchart.png)
 The `seibot.Data` class interfaces the CDS environment and local database to
 obtain estimates or models of seismic noise, sensor noises, and plant models
 using real-time signals.
