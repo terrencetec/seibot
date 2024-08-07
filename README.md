@@ -111,6 +111,7 @@ Install using `pip`
 pip install .
 ```
 
+
 # Step-by-step tutorial
 
 ## Install Seibot
@@ -118,6 +119,8 @@ Follow [Installation](#installation) on how to install `Seibot` in a conda
 environment.
 
 ## Set up configuration files.
+config, filter config, model parameters.
+
 
 # Usage
 
