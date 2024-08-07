@@ -80,3 +80,32 @@ class Model:
         plant = dcgain * wn**2 / (s**2 + wn/q*s + wn**2)
 
         return plant
+
+    def transfer_function(self, f, lnum, lden, *numden):
+        """Transfer function
+        
+        Parameters
+        ----------
+        f : array
+            Frequency axis.
+        lnum : int
+            Number of numerator coefficients
+        lden : int
+            Number of denominator coefficients
+        *numden : array
+            Numerator coefficients and denominator coefficients in an array.
+
+        Return
+        ------
+        tf : TransferFunction
+            Transfer Function.
+        """
+        # Sanity check
+        if lnum + lden != len(numden):
+            raise ValueError("Number of cofficients do not add up.")
+        lnum = int(lnum)
+        num, den = np.split(numden, [lnum])
+        tf = control.tf(num, den)
+
+        return tf
+
