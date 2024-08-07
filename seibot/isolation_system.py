@@ -31,7 +31,7 @@ class Sensor:
         noise : array
             The amplitude spectral density of the sensor noise.
         """
-        self.f = f,
+        self.f = f
         self.noise = noise
 
     @property
