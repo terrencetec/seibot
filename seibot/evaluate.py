@@ -137,8 +137,7 @@ class Evaluate:
         return rms
 
     def min_rms_displacement(self):
-        """Returns a configuration with lowest RMS displacement.
-        
+        """Returns a configuration with lowest RMS displacement. 
         """
         rms_displacement_matrix = np.empty(
             np.shape(self.displacement_matrix[:, :, 0]))
@@ -152,4 +151,97 @@ class Evaluate:
         
         return self.filter_configurations(min_i, min_j)
 
+    def min_rms_velocity(self):
+        """Returns a configuration with lowest RMS velocity. 
+        """
+        rms_velocity_matrix = np.empty(
+            np.shape(self.displacement_matrix[:, :, 0]))
+        for i in range(len(rms_velocity_matrix)):
+            for j in range(len(rms_velocity_matrix[0])):
+                rms_velocity_matrix[i, j] = self.get_rms(
+                    self.f,
+                    2*np.pi*self.f*self.displacement_matrix[i, j])
 
+        argmin = np.argmin(rms_velocity_matrix)
+        min_i, min_j = np.unravel_index(argmin, rms_velocity_matrix.shape)
+        
+        return self.filter_configurations(min_i, min_j)
+
+    def get_threshold_indices(self, disp_thres, vel_thres):
+        """Returns a list of indices of displacements within thresholds.
+        
+        Parameters
+        ----------
+        disp_thres : float
+            RMS displacement threshold (nm).
+        vel_thres : float
+            RMS velocity threshold (nm/s).
+        
+        Returns
+        -------
+        List of Tuples
+            A list of indices of the displacement matrix.
+        """
+        list_indices = []
+        for i in range(len(self.displacement_matrix)):
+            for j in range(len(self.displacement_matrix[0])):
+                # Test RMS displacement
+                displacement = self.displacement_matrix[i, j]
+                rms_displacement = self.get_rms(self.f, displacement)
+                rms_displacement *= 1e9  # m to nm
+                if rms_displacement > disp_thres:
+                    continue
+                # Test RMS velocity
+                velocity = 2*np.pi*self.f*displacement
+                rms_velocity = self.get_rms(self.f, velocity)
+                rms_velocity *= 1e9
+                if rms_velocity > vel_thres:
+                    continue
+                # Passes two tests
+                list_indices.append((i, j))
+        return list_indices
+
+    def threshold_optimize(
+            self, disp_thres, vel_thres, f_lower, f_upper, optimize):
+        """Eliminate and then optimize within frequency band
+        
+        Parameters
+        ----------
+        disp_thres : float
+            RMS displacement threshold (nm).
+        vel_thres : float
+            RMS velocity threshold (nm/s).
+        f_lower : float
+            Lower bound of the frequency band.
+        f_upper : float
+            Upper bound of the frequency band.
+        optimize : str
+            Optimize RMS displacement or velocity within the frequency band.
+            Choose from "displacement" or "velocity"
+
+        Returns
+        -------
+        Dict
+            A filter configuration within displacement and velocity
+            thresholds that gives optimized band-limited
+            displacement/velocity RMS.
+        """
+        list_indices = self.get_threshold_indices(disp_thres, vel_thres)
+        list_rms = []
+
+        mask = (self.f > f_lower) * (self.f < f_upper)
+        f = self.f[mask]
+
+        for index in list_indices:
+            displacement = self.displacement_matrix[index][mask]
+            if optimize == "velocity":
+                asd = 2*np.pi*f*displacement
+            else:
+                asd = displacement
+            rms = self.get_rms(f, asd)
+            list_rms.append(rms)
+
+        min_index = np.argmin(list_rms)
+        min_i, min_j = list_indices[min_index]
+
+        return self.filter_configurations(min_i, min_j)
