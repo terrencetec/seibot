@@ -198,13 +198,84 @@ class FilterConfigurations:
         sc = self.sc_pool[i]
         lp = self.lp_pool[j]
         hp = self.hp_pool[j]
-        filter_configuration = {
-            "sensor correction filter": sc,
-            "low pass filter": lp,
-            "high pass filter": hp
-        }
+
+        filter_configuration = FilterConfiguration(sc, lp, hp)
+        # filter_configuration = {
+        #     "sensor correction filter": sc,
+        #     "low pass filter": lp,
+        #     "high pass filter": hp
+        # }
 
         return filter_configuration
+
+
+class FilterConfiguration(dict):
+    """Filter Configuration"""
+    def __init__(self, sc, lp, hp):
+        """Constructor"""
+        super().__init__()
+        self.sc = sc
+        self.lp = lp
+        self.hp = hp
+
+    @property
+    def sc(self):
+        """Sensor correction filter"""
+        return self._sc
+    
+    @sc.setter
+    def sc(self, _sc):
+        """Sensor correction filter setter"""
+        self._sc = _sc
+        self["sensor correction filter"] = _sc
+
+    @property
+    def lp(self):
+        """Low pass filter"""
+        return self._lp
+    
+    @lp.setter
+    def lp(self, _lp):
+        """Low pass filter setter"""
+        self._lp = _lp
+        self["low pass filter"] = _lp
+
+    @property
+    def hp(self):
+        """High pass filter"""
+        return self._hp
+    
+    @hp.setter
+    def hp(self, _hp):
+        """High pass filter setter"""
+        self._hp = _hp
+        self["high pass filter"] = _hp
+    
+    def export(self, path):
+        """Export filter configuration to path"""
+        sc = self.sc
+        lp = self.lp
+        hp = self.hp
+
+        config = configparser.ConfigParser()
+        config["Sensor correction filter"] = {
+            "filter_file": sc.filter_file,
+            "module": sc.module,
+            "fm": sc.fm
+        }
+        config["Low pass filter"] = {
+            "filter_file": lp.filter_file,
+            "module": lp.module,
+            "fm": lp.fm
+        }
+        config["High pass filter"] = {
+            "filter_file": hp.filter_file,
+            "module": hp.module,
+            "fm": hp.fm
+        }
+
+        with open(path, "w") as file:
+            config.write(file)
 
 
 class InverseFilters:
