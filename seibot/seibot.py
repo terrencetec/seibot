@@ -130,9 +130,22 @@ class Seibot:
             The path of the output configuration file.
         """
         best_filters = self.get_best_filters()
-        sc = best_filters["sensor correction filter"]
-        lp = best_filters["low pass filter"]
-        hp = best_filters["high pass filter"]
+        self.export_configuration(best_filters, path)
+
+    def export_configuration(self, filter_configuration, path):
+        """Export a filter configuration to path
+
+        Parameters
+        ----------
+        filter_configuration : dict
+            The filter configuration with keys
+            ["sensor correction filter", "low pass filter", "high pass filter"]
+        path : str
+            The path of the output configuration file.
+        """
+        sc = filter_configuration["sensor correction filter"]
+        lp = filter_configuration["low pass filter"]
+        hp = filter_configuration["high pass filter"]
 
         config = configparser.ConfigParser()
         config["Sensor correction filter"] = {
@@ -153,5 +166,3 @@ class Seibot:
 
         with open(path, "w") as file:
             config.write(file)
-
-
