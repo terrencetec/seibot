@@ -113,7 +113,7 @@ class Evaluate:
                 filter_config = self.filter_configurations(i, j)
                 self.isolation_system.filter_configuration = filter_config
                 displacement = self.isolation_system.get_displacement(
-                    self.f, self.seismic_noise)
+                    self.seismic_noise)
                 displacement_matrix[i, j] = displacement
 
         return displacement_matrix

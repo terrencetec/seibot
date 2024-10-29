@@ -78,21 +78,22 @@ class Forecast:
         """Frequency array setter"""
         self._f = _f
 
-    def get_sensor_correction_noise(self, f,
+    def get_sensor_correction_noise(self,
                                     seismic_noise, seismometer_noise,
-                                    sensor_correction_filter):
+                                    sensor_correction_filter,
+                                    sensor_correction_comp):
         """Evaluate the sensor correction noise
 
         Parameters
         ----------
-        f : array
-            Frequency array.
         seismic_noise : array
             The amplitude spectral density of seismic noise.
         seismometer_noise : array
             The amplitude spectral density of seismometer noise.
-        sensor_correction_filter : TransferFunction
-            The transfer function of the sensor correction filter.
+        sensor_correction_filter : array
+            The magnitude response of the sensor correction filter.
+        sensor_correction_comp : array
+            The magnitude response of the sensor correction complementary.
 
         Returns
         -------
@@ -100,22 +101,22 @@ class Forecast:
             The estimated sensor correction noise
         """
         h_sc = sensor_correction_filter
-        h_trans = 1 - sensor_correction_filter
-        filtered_seismometer = abs(h_sc(1j*2*np.pi*f)) * seismometer_noise
-        filtered_seismic = abs(h_trans(1j*2*np.pi*f)) * seismic_noise
+        h_trans = sensor_correction_comp
+        # filtered_seismometer = abs(h_sc(1j*2*np.pi*f)) * seismometer_noise
+        # filtered_seismic = abs(h_trans(1j*2*np.pi*f)) * seismic_noise
+        filtered_seismometer = h_sc * seismometer_noise
+        filtered_seismic = h_trans * seismic_noise
         noise = (filtered_seismometer**2 + filtered_seismic**2)**.5
         
         return noise
         
-    def get_corrected_relative_noise(self, f,
+    def get_corrected_relative_noise(self,
                                    relative_sensor_noise,
                                    sensor_correction_noise):
         """Evaluate the sensor-corrected relative sensor noise
         
         Parameters
         ----------
-        f : array
-            Frequency array
         relative_sensor_noise : array
             The amplitude spectral density of relative sensor noise.
         sensor_correction_noise : array
@@ -130,66 +131,63 @@ class Forecast:
 
         return noise
 
-    def get_super_sensor_noise(self, f,
+    def get_super_sensor_noise(self,
                                sensor_noise1, sensor_noise2,
-                               h1, h2=None):
+                               h1, h2):
         """Evaluate the super sensor noise
         
         Parameters
         ----------
-        f : array
-            Frequency array
         sensor_noise1 : array
             The amplitude spectral density of sensor noise 1.
         sensor_noise2 : array
             The amplitude spectral density of sensor noise 2.
-        h1 : TransferFunction
-            The complementary filter 1.
-        h2 : TransferFunction, optional
-            The complementary filter 2.
-            Defaults ``1-h1``.
+        h1 : array
+            The magnitude response of the complementary filter 1.
+        h2 : array
+            The magnitude response of the complementary filter 2.
 
         Returns
         -------
         noise : array
             The estimated super sensor noise.
         """
-        filtered_noise1 = abs(h1(1j*2*np.pi*f)) * sensor_noise1
-        filtered_noise2 = abs(h2(1j*2*np.pi*f)) * sensor_noise2
+        # filtered_noise1 = abs(h1(1j*2*np.pi*f)) * sensor_noise1
+        # filtered_noise2 = abs(h2(1j*2*np.pi*f)) * sensor_noise2
+        filtered_noise1 = h1 * sensor_noise1
+        filtered_noise2 = h2 * sensor_noise2
         noise = (filtered_noise1**2 + filtered_noise2**2)**.5
         
         return noise
     
-    def get_disturbance(self, f, seismic_noise, transmissivity):
+    def get_disturbance(self, seismic_noise, transmissivity):
         """Evaluate seismic disturbance
 
         Parameters
         ----------
-        f : array
-            Frequency array.
         seismic_noise : array
             The amplitude spectral density of the seismic noise.
-        transmissivity : TransferFunction
-            The seismic transmissivity.
+        transmissivity : array
+            The magnitude response of the seismic transmissivity.
         
         Returns
         -------
         disturbance : array
             The estimated seismic disturbance
         """
-        disturbance = abs(transmissivity(1j*2*np.pi*f)) * seismic_noise
+        # disturbance = abs(transmissivity(1j*2*np.pi*f)) * seismic_noise
+        disturbance =  transmissivity * seismic_noise
 
         return disturbance
 
-    def get_noise(self, f, seismic_noise, seismometer_noise,
+    def get_noise(self, seismic_noise, seismometer_noise,
                   relative_sensor_noise, inertial_sensor_noise,
-                  sensor_correction_filter, h1, h2=None):
+                  sensor_correction_filter, sensor_correction_comp,
+                  h1, h2):
         """Evaluate sensing noise of the isolation platform
         
         Parameters
         ----------
-        f : array
-            Frequency array.
         seismic_noise : array
             The amplitude spectral density of the seismic noise.
         seismoemter_noise : array
@@ -198,13 +196,16 @@ class Forecast:
             The amplitude spectral density of the relative sensor noise.
         inertial_sensor_noise : array
             The amplitude spectral density of the inertial sensor noise.
-        sensor_correction_filter : TransferFunction
-            The sensor correction filter.
-        h1 : TransferFunction
-            The complementary filter filtering the corrected relative sensor.
-        h2 : TransferFunction, optional
-            The complementary filter filtering the inertial sensor.
-            Defaults ``1-h1``.
+        sensor_correction_filter : array
+            The magnitude response of the sensor correction filter.
+        sensor_correction_comp : array
+            The magnitude response of the sensor correction complementary.
+        h1 : array
+            The magnitude response of the
+            complementary filter filtering the corrected relative sensor.
+        h2 : array
+            The magnitude response of the
+            complementary filter filtering the inertial sensor.
 
         Returns
         -------
@@ -212,41 +213,39 @@ class Forecast:
             The estimated sensing noise of the isolation platform.
         """
         sensor_correction_noise = self.get_sensor_correction_noise(
-            f, seismic_noise, seismometer_noise, sensor_correction_filter)
+            seismic_noise, seismometer_noise,
+            sensor_correction_filter, sensor_correction_comp)
         corrected_relative_noise = self.get_corrected_relative_noise(
-            f, relative_sensor_noise, sensor_correction_noise)
+            relative_sensor_noise, sensor_correction_noise)
         noise = self.get_super_sensor_noise(
-            f, corrected_relative_noise, inertial_sensor_noise,
+            corrected_relative_noise, inertial_sensor_noise,
             h1, h2)
 
         return noise
 
-    def get_displacement(self, f, disturbance, noise, plant, controller):
+    def get_displacement(self, disturbance, noise, sensitivity, complement):
         """Evaluate the feedback controlled displacement
 
         Parameters
         ----------
-        f : array
-            Frequency array
         disturbance : array
             The amplitude spectral density of the disturbance.
         noise : array
             The amplitude spectral density of the sensing noise.
-        plant : TransferFunction
-            The plant to be controlled.
-        controller : TransferFunction
-            The feedback controller.
+        sensitivity : array
+            Magnitude response of the sensitivity function.
+        complement : array
+            Magnitude response of the complementary sensitivity function.
 
         Returns
         -------
         displacement : array
             The estimated feedback controlled displacement.
         """
-        oltf = plant * controller
-        sensitivity = 1 / (1+oltf)
-        complement = 1 - sensitivity
-        filtered_disturbance = abs(sensitivity(1j*2*np.pi*f)) * disturbance
-        filtered_noise = abs(complement(1j*2*np.pi*f)) * noise
+        # filtered_disturbance = abs(sensitivity(1j*2*np.pi*f)i) * disturbance
+        # filtered_noise = abs(complement(1j*2*np.pi*f)) * noise
+        filtered_disturbance = sensitivity * disturbance
+        filtered_noise = complement * noise
         displacement = (filtered_disturbance**2 + filtered_noise**2)**.5
 
         return displacement

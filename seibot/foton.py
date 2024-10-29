@@ -76,31 +76,48 @@ class Foton:
         tf = control.tf([1], [1])
         s = control.tf("s")
 
+        # put all zeros and poles into a list to avoid *=
+        tf_list = []
+
         for zero in zeros:
+            zero_real = zero.real
+            zero_imag = zero.imag
             if zero == 0:
-                tf *= (s+zero)/(2*np.pi)
-            elif zero.imag > 0 and zero.real != 0:
-                wn = np.sqrt(zero.real**2 + zero.imag**2)
-                q = wn / (2*zero.real)
-                tf *= (s**2 + wn/q*s + wn**2) / wn**2
-            elif zero.imag > 0 and zero.real == 0:
+                # tf *= (s+zero)/(2*np.pi)
+                tf_list.append((s+zero)/2*np.pi)
+            elif zero_imag > 0 and zero_real != 0:
+                wn = np.sqrt(zero_real**2 + zero_imag**2)
+                q = wn / (2*zero_real)
+                # tf *= (s**2 + wn/q*s + wn**2) / wn**2
+                tf_list.append((s**2+wn/q*s+wn**2)/wn**2)
+            elif zero_imag > 0 and zero_real == 0:
                 wn = zero.imag
-                tf *= (s**2 + wn**2)/wn**2
-            elif zero.imag == 0 and zero.real != 0:
-                tf *= (s+zero.real)/zero.real
+                # tf *= (s**2 + wn**2)/wn**2
+                tf_list.append((s**2+wn**2)/wn**2)
+            elif zero_imag == 0 and zero_real != 0:
+                # tf *= (s+zero.real)/zero.real
+                tf_list.append((s+zero_real)/zero_real)
 
         for pole in poles:
+            pole_real = pole.real
+            pole_imag = pole.imag
             if pole == 0:
-                tf /= (s+pole)/(2*np.pi)
-            elif pole.imag > 0 and pole.real != 0:
-                wn = np.sqrt(pole.real**2 + pole.imag**2)
-                q = wn / (2*pole.real)
-                tf /= (s**2 + wn/q*s + wn**2) / wn**2
-            elif pole.imag > 0 and pole.real == 0:
-                wn = pole.imag
-                tf /= (s**2 + wn**2)/wn**2
-            elif pole.imag == 0 and pole.real != 0:
-                tf /= (s+pole.real)/pole.real
+                # tf /= (s+pole)/(2*np.pi)
+                tf_list.append((2*np.pi)/(s+pole))
+            elif pole_imag > 0 and pole_real != 0:
+                wn = np.sqrt(pole_real**2 + pole_imag**2)
+                q = wn / (2*pole_real)
+                # tf /= (s**2 + wn/q*s + wn**2) / wn**2
+                tf_list.append(wn**2/(s**2+wn/q*s+wn**2))
+            elif pole_imag > 0 and pole_real == 0:
+                wn = pole_imag
+                # tf /= (s**2 + wn**2)/wn**2
+                tf_list.append(wn**2/(s**2+wn**2))
+            elif pole_imag == 0 and pole_real != 0:
+                # tf /= (s+pole.real)/pole.real
+                tf_list.append(pole_real/(s+pole_real))
+
+        tf = np.prod(tf_list)
 
         if plane == "n":
             tf *= gain

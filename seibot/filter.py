@@ -55,14 +55,36 @@ class Filter(control.TransferFunction):
         """
         self._fm = _fm
 
+    @property
+    def mag(self):
+        """Magnitude response"""
+        return self._mag
+    
+    @mag.setter
+    def mag(self, _mag):
+        """Magnitude response"""
+        self._mag = _mag
+
+    @property
+    def mag_comp(self):
+        """Magnitude response of the complement filter"""
+        return self._mag_comp
+    
+    @mag_comp.setter
+    def mag_comp(self, _mag_comp):
+        """mag_comp.setter"""
+        self._mag_comp = _mag_comp
+
 
 class FilterPool(list):
     """Filter pool"""
-    def __init__(self, filter_config, inverse_filter=None):
+    def __init__(self, f, filter_config, inverse_filter=None):
         """Constructor
         
         Parameters
         ----------
+        f : array
+            Frequency array
         filter_config : str
             Path of the filter config.
         inverse_filter : control.TransferFunction, optional
@@ -77,13 +99,15 @@ class FilterPool(list):
         self.config.optionxform = str
         self.config.read(filter_config)
 
-        self.construct_filter_pool(inverse_filter)
+        self.construct_filter_pool(f, inverse_filter)
 
-    def construct_filter_pool(self, inverse_filter=None):
+    def construct_filter_pool(self, f, inverse_filter=None):
         """Construct the filter pool
         
         Parameters
         ----------
+        f : array
+            Frequency array.
         inverse_filter : control.TransferFunction, optional
             Filter representing the inverse response of a sensor.
             The inverse of this filter is applied to get rid of the
@@ -94,15 +118,23 @@ class FilterPool(list):
         if inverse_filter is None:
             inverse_filter = control.tf([1], [1])
 
+        filter_file = ""
         for filter_ in self.config.sections():
-            filter_file = self.config[filter_].get("filter_file")
+            # This if-else statement avoids unnecssary calls
+            # of the python-foton module, which is slow.
+            if filter_file == self.config[filter_].get("filter_file"):
+                pass
+            else:
+                filter_file = self.config[filter_].get("filter_file")
+                foton = seibot.foton.Foton(filter_file)
+
             module = self.config[filter_].get("module")
             fm = self.config[filter_].get("fm")
 
             # Convert fm str to list.
             fm_list = [int(fm.strip()) for fm in fm.split(",")]
 
-            foton = seibot.foton.Foton(filter_file)
+            # get_filter_tf is slow.
             tf = foton.get_filter_tf(module, fm_list)
             tf = tf / inverse_filter
 
@@ -111,6 +143,10 @@ class FilterPool(list):
             filter_obj.filter_file = filter_file
             filter_obj.module = module
             filter_obj.fm = fm
+            # Storing the magnitude response makes future calculations
+            # faster.
+            filter_obj.mag = abs(tf(1j*2*np.pi*f))
+            filter_obj.mag_comp = abs((1-tf)(1j*2*np.pi*f))
 
             # Append the instance to the pool
             self.append(filter_obj)

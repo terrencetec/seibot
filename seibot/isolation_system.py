@@ -67,6 +67,16 @@ class Process(control.TransferFunction):
         """
         super().__init__(transfer_function)
 
+    @property
+    def mag(self):
+        """Magnitude response"""
+        return self._mag
+
+    @mag.setter
+    def mag(self, _mag):
+        """mag.setter"""
+        self._mag = _mag
+
 
 class IsolationSystem:
     """Isolation system class
@@ -79,7 +89,7 @@ class IsolationSystem:
     """
     def __init__(self,
                  relative_sensor, inertial_sensor, seismometer,
-                 plant, transmissivity, controller):
+                 plant, transmissivity, controller, sensitivity, complement):
         """Constructor
 
         Parameters
@@ -96,6 +106,10 @@ class IsolationSystem:
             The seismic transmissivity.
         controller : seibot.Process or seibot.Filter
             The feedback controller.
+        sensitivity : seibot.Process
+            The sensitivity function of the closed-loop system.
+        complement : seibot.Process
+            The complementary sensitivity of the closed-loop system.
         """
         self.relative_sensor = relative_sensor
         self.inertial_sensor = inertial_sensor
@@ -103,20 +117,21 @@ class IsolationSystem:
         self.plant = plant
         self.transmissivity = transmissivity
         self.controller = controller
-        
+        # Having the below 2 speeds up futher calculations
+        self.sensitivity = sensitivity
+        self.complement = complement
+
         self.filter_configuration = {
             "sensor correction filter": None,
             "low pass filter": None,
             "high pass filter": None,
         }
 
-    def get_displacement(self, f, seismic_noise):
+    def get_displacement(self, seismic_noise):
         """Get closed-loop displacement
         
         Parameters
         ----------
-        f : array
-            Frequency array.
         seismic_noise : array
             The amplitude spectral density of the seismic noise.
 
@@ -133,26 +148,24 @@ class IsolationSystem:
         
         forecaster = seibot.forecast.Forecast()
         disturbance = forecaster.get_disturbance(
-            f=f,
             seismic_noise=seismic_noise,
-            transmissivity=self.transmissivity
+            transmissivity=self.transmissivity.mag
         )
         noise = forecaster.get_noise(
-            f=f,
             seismic_noise=seismic_noise,
             seismometer_noise=self.seismometer.noise,
             relative_sensor_noise=self.relative_sensor.noise,
             inertial_sensor_noise=self.inertial_sensor.noise,
-            sensor_correction_filter=self.sensor_correction_filter,
-            h1=self.low_pass_filter,
-            h2=self.high_pass_filter,
+            sensor_correction_filter=self.sensor_correction_filter.mag,
+            sensor_correction_comp=self.sensor_correction_filter.mag_comp,
+            h1=self.low_pass_filter.mag,
+            h2=self.high_pass_filter.mag,
         )
         displacement = forecaster.get_displacement(
-            f=f,
             disturbance=disturbance,
             noise=noise,
-            plant=self.plant,
-            controller=self.controller
+            sensitivity=self.sensitivity.mag,
+            complement=self.complement.mag
         )
         
         return displacement
