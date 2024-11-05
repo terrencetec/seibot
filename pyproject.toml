@@ -23,7 +23,7 @@ dependencies = [
 ] 
 
 [tool.setuptools]
-packages = ["seibot"]
+packages = ["seibot", "seibot.gui", "seibot.gui.option"]
 py-modules = ["__init__"]
 
 [project.urls]
@@ -32,3 +32,4 @@ Issues = "https://github.com/terrencetec/seibot/issues"
 
 [project.scripts]
 seibot = "seibot:cmd.main"
+seibot-gui = "seibot.gui:run.main"
