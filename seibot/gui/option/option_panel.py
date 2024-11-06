@@ -37,5 +37,5 @@ class OptionPanel(tkinter.LabelFrame):
         """Enable options"""
         self.plot_option.initialize()
         self.manual_option.initialize()
-        self.threshold_option.enable()
-        self.noise_option.enable()
+        self.threshold_option.initialize()
+        self.noise_option.initialize()

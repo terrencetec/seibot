@@ -114,15 +114,16 @@ class MainPlot(Plot):
 
         zorder = ln.zorder
         color = ln.get_color()
+        ls = ln.get_ls()
 
         # This is faster than set_data()
         if ln in self.ax.lines: ln.remove()
 
         if xdata is None or ydata is None:
-            ln, = self.ax.loglog([], [], color=color, zorder=zorder)
+            ln, = self.ax.loglog([], [], color=color, ls=ls, zorder=zorder)
         else:
             ln, = self.ax.loglog(
-                xdata, ydata, color=color, zorder=zorder, label=label
+                xdata, ydata, color=color, ls=ls, zorder=zorder, label=label
             )
 
         if line == "selected":
@@ -404,9 +405,9 @@ class SensorCorrectionPlot(Plot):
             self.ax.get_legend().remove()
 
         filter1_legend = self.ax.legend(
-            handles=filter2_handles, loc="lower left", prop={"size": 10})
+            handles=filter1_handles, loc="lower left", prop={"size": 9})
         filter2_legend = self.ax.legend(
-            handles=filter1_handles, loc="lower right", prop={"size": 10})
+            handles=filter2_handles, loc="lower right", prop={"size": 9})
         self.ax.add_artist(filter1_legend)
 
 
