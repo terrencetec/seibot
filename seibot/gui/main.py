@@ -5,7 +5,7 @@ import tkinter.font
 import seibot.gui.menubar
 import seibot.gui.plot
 import seibot.gui.option
-
+import seibot.gui.export
 
 
 
@@ -58,7 +58,6 @@ class Root(tkinter.Tk):
 
     def initialize(self):
         """Initialize"""
-        pass
 
     def enable_options(self):
         """Enable option panel"""

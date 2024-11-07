@@ -89,6 +89,8 @@ class ManualOption(tkinter.LabelFrame):
             )
         self.f = seibot.data.f
         self.dm = seibot.evaluate.displacement_matrix
+        self.filters = seibot.filter_configurations(
+            self.sc_option.get(), self.blend_option.get())
 
         self.enable()
 
@@ -163,6 +165,11 @@ class ManualOption(tkinter.LabelFrame):
             self.sc_option.set(0)
         elif self.sc_option.get() > len(self.sc_pool)-1:
             self.sc_option.set(len(self.sc_pool)-1)
+
+        seibot = self.root.seibot
+        self.filters = seibot.filter_configurations(
+            self.sc_option.get(), self.blend_option.get())
+
         self.plot()
 
     def blend_dropdown_clicked(self, i):
@@ -186,5 +193,11 @@ class ManualOption(tkinter.LabelFrame):
             self.blend_option.set(0)
         elif self.blend_option.get() > len(self.lp_pool)-1:
             self.blend_option.set(len(self.lp_pool)-1)
+
+        seibot = self.root.seibot
+
+        self.filters = seibot.filter_configurations(
+            self.sc_option.get(), self.blend_option.get())
+
         self.plot()
 
