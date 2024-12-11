@@ -116,9 +116,12 @@ class Data:
             self.fs = fs
 
         except:
+            self.ts_seismometer = None
+            self.ts_seismometer_coh = None
+            self.ts_inertial_sensor = None
+            self.ts_relative_sensor = None
+            self.ts_witness_sensor = None
             print("CDS error")
-
-
 
         # Initiallize dummy frequency axis:
         duration = self.config.getfloat("CDSutils", "duration")
@@ -130,6 +133,11 @@ class Data:
         f, _ = scipy.signal.welch(data, fs=self.fs, nperseg=nperseg)
         f = f[1:]  # Remove DC
         self.f = f
+
+        # Make witness spectrum if not None
+        if self.ts_witness_sensor is not None:
+            _, self.witness_sensor = self.ts2asd(
+                self.ts_witness_sensor, self.fs, nperseg)
 
         # Initialize attributes
         # Use seismometer f array if exists.
