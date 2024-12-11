@@ -70,8 +70,12 @@ class PlotOption(tkinter.LabelFrame):
         )
         plot_min_vel_button.grid(row=2, column=0, sticky="w")
 
+        self.plot_witness_var = tkinter.IntVar()
+        self.plot_witness_var.set(0)
         plot_witness_button = tkinter.Checkbutton(
-            self, text="Plot witness sensor measurement")
+            self, text="Plot witness sensor measurement",
+            variable=self.plot_witness_var, command=self.plot_witness
+        )
         plot_witness_button.grid(row=3, column=0, sticky="w")
 
         self.buttons = [
@@ -94,6 +98,7 @@ class PlotOption(tkinter.LabelFrame):
         self.bound_lower, self.bound_upper = self.get_bounds()
         self.min_disp, self.min_disp_filters = self.get_min_disp()
         self.min_vel, self.min_vel_filters = self.get_min_vel()
+        self.witness = self.get_witness()
 
         self.enable()
 
@@ -163,6 +168,18 @@ class PlotOption(tkinter.LabelFrame):
         displacement = seibot.isolation_system.get_displacement(seismic_noise)
         return displacement, filters
 
+    def get_witness(self):
+        """Get witness measurement
+        
+        Returns
+        -------
+        witness : array or None
+            The witness measurement spectrum
+        """
+        seibot = self.root.seibot
+        witness = seibot.data.witness_sensor  # This could be a None object.
+        return witness
+
     def plot_all(self):
         """Plot all"""
         if self.plot_all_var.get():
@@ -216,3 +233,10 @@ class PlotOption(tkinter.LabelFrame):
             self.root.sc_plot.update_line("min_vel_comp")
             self.root.blend_plot.update_line("min_vel")
             self.root.blend_plot.update_line("min_vel_comp")
+
+    def plot_witness(self):
+        """Plot witness"""
+        if self.plot_witness_var.get() and self.witness is not None:
+            self.root.main_plot.update_line("witness", self.f, self.witness)
+        else:
+            self.root.main_plot.update_line("witness")

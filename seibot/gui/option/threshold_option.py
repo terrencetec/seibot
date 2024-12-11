@@ -58,14 +58,14 @@ class ThresholdOption(tkinter.LabelFrame):
         rms_disp_label = tkinter.Label(
             self, text="Select RMS displacement threshold: ")
         self.rms_disp_entry = tkinter.Entry(self, justify="right", width=10)
-        self.rms_disp_entry.insert(0, 1000)
+        self.rms_disp_entry.insert(0, 1)
         self.rms_disp_entry.bind("<Return>", self.update_thresholds)
         rms_disp_unit = tkinter.Label(self, text="nm")
         rms_vel_label = tkinter.Label(
             self, text="Select RMS velocity threshold: ")
 
         self.rms_vel_entry = tkinter.Entry(self, justify="right", width=10)
-        self.rms_vel_entry.insert(0, 300)
+        self.rms_vel_entry.insert(0, 1)
         self.rms_vel_entry.bind("<Return>", self.update_thresholds)
         rms_vel_unit = tkinter.Label(self, text="nm/s")
 
@@ -177,8 +177,12 @@ class ThresholdOption(tkinter.LabelFrame):
         bound_upper : array
             The upper bound.
         """
-        bound_lower = np.min(self.all_displacements, axis=0)
-        bound_upper = np.max(self.all_displacements, axis=0)
+        if len(self.all_displacements) != 0:
+            bound_lower = np.min(self.all_displacements, axis=0)
+            bound_upper = np.max(self.all_displacements, axis=0)
+        else:
+            bound_lower = None
+            bound_upper = None
         return bound_lower, bound_upper
     
     def get_tebo(self):
@@ -193,19 +197,23 @@ class ThresholdOption(tkinter.LabelFrame):
         """
         seibot = self.root.seibot
         seismic_noise = seibot.data.seismic_noise
+        
+        if len(self.all_displacements) != 0:
+            disp_thres = float(self.rms_disp_entry.get())
+            vel_thres = float(self.rms_vel_entry.get())
+            f_lower = float(self.frequency_lower_entry.get())
+            f_upper = float(self.frequency_upper_entry.get())
+            optimize = self.optimize_option.get()
 
-        disp_thres = float(self.rms_disp_entry.get())
-        vel_thres = float(self.rms_vel_entry.get())
-        f_lower = float(self.frequency_lower_entry.get())
-        f_upper = float(self.frequency_upper_entry.get())
-        optimize = self.optimize_option.get()
+            filters = seibot.evaluate.threshold_optimize(
+                disp_thres, vel_thres, f_lower, f_upper, optimize)
 
-        filters = seibot.evaluate.threshold_optimize(
-            disp_thres, vel_thres, f_lower, f_upper, optimize)
+            seibot.isolation_system.filter_configuration = filters
 
-        seibot.isolation_system.filter_configuration = filters
-
-        displacement = seibot.isolation_system.get_displacement(seismic_noise)
+            displacement = seibot.isolation_system.get_displacement(seismic_noise)
+        else:
+            displacement = None
+            filters = None
 
         return displacement, filters
 
@@ -223,7 +231,7 @@ class ThresholdOption(tkinter.LabelFrame):
 
     def plot_all(self):
         """plot all"""
-        if self.plot_all_var.get():
+        if self.plot_all_var.get() and len(self.all_displacements)!=0:
             if self.plot_style.get() == "Bounds":
                 self.root.main_plot.update_bounds(
                     "threshold", self.f, self.bound_lower, self.bound_upper)
@@ -239,7 +247,7 @@ class ThresholdOption(tkinter.LabelFrame):
 
     def plot_tebo(self):
         """plot tebo"""
-        if self.plot_tebo_var.get():
+        if self.plot_tebo_var.get() and len(self.all_displacements)!=0:
             self.root.main_plot.update_line("tebo", self.f, self.tebo)
             sc = self.tebo_filters.sc
             lp = self.tebo_filters.lp

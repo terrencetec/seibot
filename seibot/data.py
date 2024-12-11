@@ -138,6 +138,8 @@ class Data:
         if self.ts_witness_sensor is not None:
             _, self.witness_sensor = self.ts2asd(
                 self.ts_witness_sensor, self.fs, nperseg)
+        else:
+            self.witness_sensor = None
 
         # Initialize attributes
         # Use seismometer f array if exists.

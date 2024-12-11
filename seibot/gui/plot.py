@@ -64,6 +64,8 @@ class MainPlot(Plot):
         self.all_bound_ln = self.ax.fill_between([], [], [])
         self.threshold_bound_ln = self.ax.fill_between([], [], [])
 
+        self.witness_ln = self.ax.loglog([], [], "C5", zorder=0)
+
         self.ax.set_title("Isolation table motion")
         self.ax.set_ylabel(
             r"Displacement $\left(\mathrm{m}/\sqrt{\mathrm{Hz}}\right)$")
@@ -77,7 +79,8 @@ class MainPlot(Plot):
         ----------
         line : str
             Line to be updated.
-            Select from ["selected", "min_disp", "min_vel", "tebo"]
+            Select from ["selected", "min_disp", "min_vel", "tebo",
+            "seismic", "seismometer", "relative", "inertial", "witness"]
         xdata : array, optional
             Updated x data.
             Defaults None.
@@ -109,6 +112,9 @@ class MainPlot(Plot):
         elif line == "inertial":
             ln = self.inertial_ln
             label = "Inertial sensor noise"
+        elif line == "witness":
+            ln = self.witness_ln
+            label = "Witness measurement"
         else:
             raise ValueError(f"{line} line does not exist.")
 
@@ -142,6 +148,8 @@ class MainPlot(Plot):
             self.relative_ln = ln
         elif line == "inertial":
             self.inertial_ln = ln
+        elif line == "witness":
+            self.witness_ln = ln
         
         self.update_legend()
         self.canvas.draw()
