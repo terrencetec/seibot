@@ -148,6 +148,7 @@ class Data:
         _, self.inertial_sensor_noise = self.get_inertial_sensor_noise()
         _, self.relative_sensor_noise = self.get_relative_sensor_noise()
         _, self.plant = self.get_plant()
+        _, self.post_plant = self.get_post_plant()
         _, self.transmissivity = self.get_transmissivity()
         _, self.controller = self.get_controller()
         
@@ -273,7 +274,7 @@ class Data:
         dynamic = self.config["Relative sensor"].getboolean("dynamic")
         
         if dynamic:
-            f, relative_asd = self.model_relative_asd()
+            f, relative_asd = self.dynamic_relative_asd()
         else:
             f, relative_asd = self.get_modeled("Relative sensor")
 
@@ -292,11 +293,30 @@ class Data:
         dynamic = self.config["Plant"].getboolean("dynamic")
 
         if dynamic:
-            f, plant = self.model_plant()
+            f, plant = self.dynamic_plant()
         else:
             f, plant = self.get_modeled("Plant")
 
         return f, plant
+
+    def get_post_plant(self):
+        """Get post plant
+
+        Returns
+        -------
+        f : array
+            Frequency array
+        post_plant : array
+            The frequency response of the post plant.
+        """
+        dynamic = self.config["Post plant"].getboolean("dynamic")
+
+        if dynamic:
+            f, post_plant = self.dynamic_post_plant()
+        else:
+            f, post_plant = self.get_modeled("Post plant")
+
+        return f, post_plant
 
     def get_transmissivity(self):
         """Get transmissivity
@@ -311,7 +331,7 @@ class Data:
         dynamic = self.config["Transmissivity"].getboolean("dynamic")
         
         if dynamic:
-            f, transmissivity = self.model_transmissivity()
+            f, transmissivity = self.dynamic_transmissivity()
         else:
             f, transmissivity = self.get_modeled("Transmissivity")
 
@@ -628,6 +648,18 @@ class Data:
         """
         raise ValueError("Dynamic plant is not supported.")
 
+    def dynamic_post_plant(self):
+        """Estimate dynamic post plant.
+
+        Returns
+        -------
+        f : array
+            Frequency array
+        post_plant : control.TransferFunction
+            Transfer function of the post plant.
+        """
+        raise ValueError("Dynamic plant is not supported.")
+
     def dynamic_transmissivity(self):
         """Estimate dynamic transmissivity
 
@@ -639,7 +671,6 @@ class Data:
             Transfer function of the transmissivity.
         """
         raise ValueError("Dynamic transmissivity is not supported.")
-
 
     def get_modeled(self, instrument):
         """Get modeled spectrum/frequency response

@@ -169,6 +169,24 @@ class IsolationSystem:
         )
         
         return displacement
+
+    def get_post_plant_displacement(self, seismic_noise):
+        """Get closed-loop post-plant displacement
+
+        Parameters
+        ----------
+        seismic_noise : array
+            The amplitude spectral density of the seismic noise.
+
+        Returns
+        -------
+        displacement : array
+            The closed-loop post-plant displacement.
+        """
+        displacement = self.get_displacement(seismic_noise)
+        displacement *= abs(self.post_plant)
+        return displacement
+        
     # def __call__(self,
     #              sensor_correction_filter,
     #              low_pass_filter, high_pass_filter):
