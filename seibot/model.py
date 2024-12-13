@@ -2,6 +2,7 @@
 """
 import control
 import numpy as np
+import scipy
 
 
 class Model:
@@ -108,4 +109,30 @@ class Model:
         tf = control.tf(num, den)
 
         return tf
+
+    def interpolate(self, f,  npz_data):
+        """Interpolate spectrum from saved .npz data
+        
+        Parameters
+        ----------
+        f : array
+            Frequency array.
+        npz_data : str
+            Path to the .npz data.
+            The npz data is loaded by numpy.load.
+            It has 2 keys ["f", "data"].
+
+        Returns
+        -------
+        spectrum
+            The interpolated spectrum.
+        """
+        data = np.load(npz_data)
+        f_data = data["f"]
+        spectrum_data = data["data"]
+        log_interp = scipy.interpolate.interp1d(
+            f_data, np.log10(spectrum_data), fill_value="extrapolate")
+        spectrum = 10**log_interp(f)
+        
+        return spectrum
 
