@@ -388,7 +388,10 @@ class Data:
 #             seismic_asd = self.pad_seismic_noise(seismic_asd, coherence)
         else:
             f, seismic_asd = self.get_modeled("Seismic")
-            seismic_asd = abs(seismic_asd(1j*2*np.pi*f))
+            try:
+                seismic_asd = abs(seismic_asd(1j*2*np.pi*f))
+            except TypeError:
+                pass
 
         return f, seismic_asd
 
@@ -555,14 +558,17 @@ class Data:
         seismic_asd = seismic_asd * abs(cal_filter(1j*2*np.pi*f))
         seismic_asd = seismic_asd * 1e-9  # From nm to m. TODO avoid hardcode.
 
-        cutoff_i = self._get_seismometer_cutoff(seismic_asd, coh)
-        # v TODO avoid Hardcode 0.01 
-        f_mask = (f>0.01) * (f<f[cutoff_i])
-        seismometer_noise = seismic_asd[f_mask]
+        # cutoff_i = self._get_seismometer_cutoff(seismic_asd, coh)
+        # # v TODO avoid Hardcode 0.01 
+        # f_mask = (f>0.01) * (f<f[cutoff_i])
+        # seismometer_noise = seismic_asd[f_mask]
         
-        # Fit
-        seismometer_asd = self.fit_seismometer_noise(
-            f[f_mask], seismometer_noise)
+        # # Fit
+        # seismometer_asd = self.fit_seismometer_noise(
+        #     f[f_mask], seismometer_noise)
+
+        # Instead of the above, use coherent subtraction:
+        seismometer_asd = (seismic_asd**2 * (1-coh**.5))**.5
 
         return f, seismometer_asd
 
@@ -696,13 +702,17 @@ class Data:
         # Get model
         model = seibot.model.Model()
         model_method = getattr(model, model_name)
-
-        # Get parameters
-        parameters = np.loadtxt(path_parameters)
-
-        # Evaluate frequency series
         f = self.f
-        frequency_series = model_method(f, *parameters)
+
+        if model_name == "interpolate":
+            # Interpolate from data.
+            frequency_series = model_method(f, path_parameters)
+        else:
+            # Get parameters
+            parameters = np.loadtxt(path_parameters)
+
+            # Evaluate frequency series
+            frequency_series = model_method(f, *parameters)
 
         return f, frequency_series
 
