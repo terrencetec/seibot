@@ -258,6 +258,11 @@ class Data:
             f, inertial_asd = self.dynamic_inertial_asd()
         else:
             f, inertial_asd = self.get_modeled("Inertial sensor")
+        
+        try:
+            inertial_asd = abs(inertial_asd(1j*2*np.pi*f))
+        except TypeError:
+            pass
 
         return f, inertial_asd
 
@@ -430,6 +435,11 @@ class Data:
             # seismometer_asd = self._seismometer_noise_model(f, *param)
         else:
             f, seismometer_asd = self.get_modeled("Seismometer")        
+
+        try:
+            seismometer_asd = abs(seismometer_asd(1j*2*np.pi*f))
+        except TypeError:
+            pass
 
         return f, seismometer_asd
 
