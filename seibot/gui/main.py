@@ -14,6 +14,7 @@ class Root(tkinter.Tk):
     def __init__(self):
         """Constructor"""
         super().__init__()
+        self.title("Seibot GUI")
         self.attributes("-type", "dialog")
         default_font = tkinter.font.nametofont("TkDefaultFont")
         default_font.configure(size=12)
