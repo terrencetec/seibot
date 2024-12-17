@@ -274,7 +274,8 @@ class MainPlot(Plot):
             self.all_ln_label,
             self.all_bound_ln,
             self.threshold_ln_label,
-            self.threshold_bound_ln
+            self.threshold_bound_ln,
+            self.witness_ln
         ]
         noise_handles = [
             self.seismic_ln,
