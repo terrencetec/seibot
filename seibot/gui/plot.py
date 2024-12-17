@@ -64,7 +64,7 @@ class MainPlot(Plot):
         self.all_bound_ln = self.ax.fill_between([], [], [])
         self.threshold_bound_ln = self.ax.fill_between([], [], [])
 
-        self.witness_ln = self.ax.loglog([], [], "C5", zorder=0)
+        self.witness_ln, = self.ax.loglog([], [], "C5", zorder=0)
 
         self.ax.set_title("Isolation table motion")
         self.ax.set_ylabel(
@@ -175,14 +175,20 @@ class MainPlot(Plot):
             label = "All estimated displacements"
             color = "k"
             zorder = 0
-            alpha = .025
+            try:
+                alpha = .1 * len(ydatas)/10
+            except:
+                pass
         elif line == "threshold":
             all_ln = self.threshold_ln
             all_ln_label = self.threshold_ln_label
             label = "All within RMS thresholds"
             color = "C0"
             zorder = 1
-            alpha = .1
+            try:
+                alpha = .1 * len(ydatas)/10
+            except:
+                pass
 
         for ln in all_ln:
             if ln in self.ax.lines: ln.remove()

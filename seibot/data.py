@@ -138,6 +138,13 @@ class Data:
         if self.ts_witness_sensor is not None:
             _, self.witness_sensor = self.ts2asd(
                 self.ts_witness_sensor, self.fs, nperseg)
+            calibration = self.config["Calibration"]["witness_sensor"]
+            inv_filter = seibot.filter.InverseFilters()
+            cal_filter = getattr(inv_filter, calibration)
+            self.witness_sensor = (self.witness_sensor
+                                   * abs(cal_filter(1j*2*np.pi*f))
+            )
+            self.witness_sensor = self.witness_sensor * 1e-9  # From nm to m. TODO avoid hardcode.
         else:
             self.witness_sensor = None
 
