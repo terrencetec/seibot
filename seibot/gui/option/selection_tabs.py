@@ -33,9 +33,13 @@ class SelectionTabs(tkinter.ttk.Notebook):
         # self.blrms.pack()
         # self.add(self.blrms, text="BLRMS")
 
+        self.bind("<<NotebookTabChanged>>", self.tab_changed)
+
         self.selected_sc = None
         self.selected_lp = None
         self.selected_hp = None
+
+        self.ready = False
 
     def initialize(self):
         """Initialize"""
@@ -63,6 +67,7 @@ class SelectionTabs(tkinter.ttk.Notebook):
         # Initialize tabs
         self.manual.initialize()
         self.rms.initialize()
+        self.ready = True
         # self.blrms.initialize()
 
 
@@ -143,4 +148,15 @@ class SelectionTabs(tkinter.ttk.Notebook):
         ydata_comp = hp.mag
         self.root.blend_plot.update_line("selected", xdata, ydata)
         self.root.blend_plot.update_line("selected_comp", xdata, ydata_comp)
+
+
+    def tab_changed(self, _):
+        """Tab changed"""
+        if self.ready:
+            index = self.index(self.select())
+            if index == 0:
+                self.manual.update_selected_sc()
+                self.manual.update_selected_blend()
+            elif index == 1:
+                self.rms.update()
 

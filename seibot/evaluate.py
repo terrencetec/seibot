@@ -136,31 +136,56 @@ class Evaluate:
         rms = np.sqrt(np.trapz(y=asd**2, x=f))
         return rms
 
-    def min_rms_displacement(self):
+    def min_rms_displacement(self, f_lower=None, f_upper=None):
         """Returns a configuration with lowest RMS displacement. 
+
+        Parameters
+        ----------
+        f_lower : float, default None
+            Lower bound of the frequency band.
+        f_upper : float, default None
+            Upper bound of the frequency band.
         """
+        if f_lower is None:
+            f_lower = 0
+        if f_upper is None:
+            f_upper = np.inf
+        mask = (self.f > f_lower) * (self.f < f_upper)
         rms_displacement_matrix = np.empty(
             np.shape(self.displacement_matrix[:, :, 0]))
         for i in range(len(rms_displacement_matrix)):
             for j in range(len(rms_displacement_matrix[0])):
-                rms_displacement_matrix[i, j] = self.get_rms(
-                    self.f, self.displacement_matrix[i, j])
+                f = self.f[mask]
+                displacement = self.displacement_matrix[i, j][mask]
+                rms_displacement_matrix[i, j] = self.get_rms(f, displacement)
 
         argmin = np.argmin(rms_displacement_matrix)
         min_i, min_j = np.unravel_index(argmin, rms_displacement_matrix.shape)
         
         return self.filter_configurations(min_i, min_j)
 
-    def min_rms_velocity(self):
+    def min_rms_velocity(self, f_lower=None, f_upper=None):
         """Returns a configuration with lowest RMS velocity. 
+
+        Parameters
+        ----------
+        f_lower : float, default None
+            Lower bound of the frequency band.
+        f_upper : float, default None
+            Upper bound of the frequency band.
         """
+        if f_lower is None:
+            f_lower = 0
+        if f_upper is None:
+            f_upper = np.inf
+        mask = (self.f > f_lower) * (self.f < f_upper)
         rms_velocity_matrix = np.empty(
             np.shape(self.displacement_matrix[:, :, 0]))
         for i in range(len(rms_velocity_matrix)):
             for j in range(len(rms_velocity_matrix[0])):
-                rms_velocity_matrix[i, j] = self.get_rms(
-                    self.f,
-                    2*np.pi*self.f*self.displacement_matrix[i, j])
+                f = self.f[mask]
+                velocity = 2*np.pi*f[mask]*self.displacement_matrix[i, j][mask] 
+                rms_velocity_matrix[i, j] = self.get_rms(f, velocity)
 
         argmin = np.argmin(rms_velocity_matrix)
         min_i, min_j = np.unravel_index(argmin, rms_velocity_matrix.shape)
