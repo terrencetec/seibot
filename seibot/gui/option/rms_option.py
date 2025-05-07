@@ -114,7 +114,6 @@ class RMSOption(tkinter.LabelFrame):
         self.buttons = [
             optimize_displacement, optimize_velocity,
             self.optimize_band_button,
-            # self.frequency_lower_entry, self.frequency_upper_entry,
         ]
         self.band_buttons = [
             self.optimize_0_3e_2,
@@ -161,11 +160,11 @@ class RMSOption(tkinter.LabelFrame):
 
     def plot(self):
         """Plot"""
-        self.master.plot()
+        if self.master.enabled:
+            self.master.plot()
 
     def update(self):
         """Update filter selections"""
-        # print(f"optimizing {self.frequency_lower} - {self.frequency_upper}")
         if self.optimize_band.get():
             f_lower = self.frequency_lower
             f_upper = self.frequency_upper
@@ -182,6 +181,7 @@ class RMSOption(tkinter.LabelFrame):
         self.master.selected_sc = filters.sc
         self.master.selected_lp = filters.lp
         self.master.selected_hp = filters.hp
+
         self.plot()
 
     def update_band(self, _=None):
@@ -247,6 +247,7 @@ class RMSOption(tkinter.LabelFrame):
         self.apply.config(state="disabled")
         self.frequency_lower = lower
         self.frequency_upper = upper
+
         self.update()
 
     def _optimize_custom(self):
@@ -254,9 +255,5 @@ class RMSOption(tkinter.LabelFrame):
         self.frequency_lower_entry.config(state="normal")
         self.frequency_upper_entry.config(state="normal")
         self.apply.config(state="normal")
+
         self.update_band()
-
-
-    # Next steps:
-    # Add predefined bands
-    # Make update work

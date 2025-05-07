@@ -21,14 +21,6 @@ class ManualOption(tkinter.LabelFrame):
 
         self.config(font=("Helvetica", 12, "bold"))
         
-        # self.plot_var = tkinter.IntVar()
-        # self.plot_var.set(0)
-
-        # plot_button = tkinter.Checkbutton(
-        #     self, text="Plot selected",
-        #     variable=self.plot_var, command=self.plot
-        # )
-
         sc_label = tkinter.Label(
             self, text="Select sensor correction filters: ")
         self.sc_option = tkinter.IntVar()
@@ -49,7 +41,6 @@ class ManualOption(tkinter.LabelFrame):
         blend_right = tkinter.Button(
             self, text=">", command=self.blend_right_clicked)
 
-        # plot_button.grid(row=0, column=0, columnspan=4, sticky="w")
         sc_label.grid(row=1, column=0, sticky="w")
         self.sc_dropdown.grid(row=1, column=2, sticky="e")
         sc_left.grid(row=1, column=1, sticky="e")
@@ -62,7 +53,6 @@ class ManualOption(tkinter.LabelFrame):
         blend_right.grid(row=2, column=3, sticky="e")
 
         self.buttons = [
-            # plot_button,
             self.sc_dropdown, sc_left, sc_right,
             self.blend_dropdown, blend_left, blend_right
         ]
@@ -96,7 +86,6 @@ class ManualOption(tkinter.LabelFrame):
 
         self.enable()
 
-
     def enable(self):
         """Enable buttons"""
         for button in self.buttons:
@@ -104,47 +93,8 @@ class ManualOption(tkinter.LabelFrame):
 
     def plot(self):
         """plot"""
-        self.master.plot_displacement()
-        self.master.plot_sc()
-        self.master.plot_blend()
-
-    def plot_displacement(self):
-        """Plot displacement"""
-        if self.plot_var.get():
-            sc_i = self.sc_option.get()
-            blend_i = self.blend_option.get()
-            xdata = self.f
-            ydata = self.dm[sc_i, blend_i]
-            self.root.main_plot.update_line("selected", xdata, ydata)
-        else:
-            self.root.main_plot.update_line("selected")
-
-    def plot_sc(self):
-        """Plot sensor correction"""
-        if self.plot_var.get():
-            sc_i = self.sc_option.get()
-            xdata = self.f
-            ydata = self.sc_pool[sc_i].mag
-            ydata_comp = self.sc_pool[sc_i].mag_comp
-            self.root.sc_plot.update_line("selected", xdata, ydata)
-            self.root.sc_plot.update_line("selected_comp", xdata, ydata_comp)
-        else:
-            self.root.sc_plot.update_line("selected")
-            self.root.sc_plot.update_line("selected_comp")
-
-    def plot_blend(self):
-        """Plot sensor correction"""
-        if self.plot_var.get():
-            blend_i = self.blend_option.get()
-            xdata = self.f
-            ydata = self.lp_pool[blend_i].mag
-            ydata_comp = self.hp_pool[blend_i].mag
-            self.root.blend_plot.update_line("selected", xdata, ydata)
-            self.root.blend_plot.update_line(
-                "selected_comp", xdata, ydata_comp)
-        else:
-            self.root.blend_plot.update_line("selected")
-            self.root.blend_plot.update_line("selected_comp")
+        if self.master.enabled:
+            self.master.plot()
 
     def sc_dropdown_clicked(self, i):
         """sc dropdown clicked"""
@@ -168,9 +118,6 @@ class ManualOption(tkinter.LabelFrame):
         elif self.sc_option.get() > len(self.sc_pool)-1:
             self.sc_option.set(len(self.sc_pool)-1)
 
-        # seibot = self.root.seibot
-        # self.filters = seibot.filter_configurations(
-        #     self.sc_option.get(), self.blend_option.get())
         index = self.sc_option.get()
         sc = self.sc_pool[index]
         
@@ -199,16 +146,11 @@ class ManualOption(tkinter.LabelFrame):
         elif self.blend_option.get() > len(self.lp_pool)-1:
             self.blend_option.set(len(self.lp_pool)-1)
 
-        # seibot = self.root.seibot
-
-        # self.filters = seibot.filter_configurations(
-        #     self.sc_option.get(), self.blend_option.get())
         index = self.blend_option.get()
         lp = self.lp_pool[index]
         hp = self.hp_pool[index]
         
         self.master.selected_lp = lp
         self.master.selected_hp = hp
-
         self.plot()
 

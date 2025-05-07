@@ -20,10 +20,10 @@ class OptionPanel(tkinter.LabelFrame):
             Tkinter parent.
         """
         super().__init__(master)
+        self.plot_option = seibot.gui.option.plot_option.PlotOption(
+            self, master)
         self.selection_tabs = seibot.gui.option.selection_tabs.SelectionTabs(
             self, master)
-        # self.plot_option = seibot.gui.option.plot_option.PlotOption(
-        #     self, master)
         # self.manual_option = seibot.gui.option.manual_option.ManualOption(
         #     self, master)
         # self.threshold_option = (
@@ -35,8 +35,8 @@ class OptionPanel(tkinter.LabelFrame):
         #     self, master)
 
 
-        self.selection_tabs.grid(row=0, column=0, sticky="ewns", pady=3)
-        # self.plot_option.grid(row=0, column=0, sticky="ewns", pady=3)
+        self.plot_option.grid(row=0, column=0, sticky="ewns", pady=3)
+        self.selection_tabs.grid(row=1, column=0, sticky="ewns", pady=3)
         # self.manual_option.grid(row=1, column=0, sticky="ewns", pady=3)
         # self.threshold_option.grid(row=2, column=0, sticky="ewns", pady=3)
         # self.noise_option.grid(row=3, column=0, sticky="ewns", pady=3)
@@ -44,8 +44,8 @@ class OptionPanel(tkinter.LabelFrame):
 
     def enable(self):
         """Enable options"""
+        self.plot_option.initialize()
         self.selection_tabs.initialize()
-        # self.plot_option.initialize()
         # self.manual_option.initialize()
         # self.threshold_option.initialize()
         # self.noise_option.initialize()

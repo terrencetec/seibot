@@ -29,10 +29,6 @@ class SelectionTabs(tkinter.ttk.Notebook):
         self.rms.pack()
         self.add(self.rms, text="RMS")
 
-        # self.blrms = self.blrms_option.BLRMSOption(self, root)
-        # self.blrms.pack()
-        # self.add(self.blrms, text="BLRMS")
-
         self.bind("<<NotebookTabChanged>>", self.tab_changed)
 
         self.selected_sc = None
@@ -40,6 +36,9 @@ class SelectionTabs(tkinter.ttk.Notebook):
         self.selected_hp = None
 
         self.ready = False
+        self.enabled = False
+        self.disable()
+
 
     def initialize(self):
         """Initialize"""
@@ -61,15 +60,20 @@ class SelectionTabs(tkinter.ttk.Notebook):
         self.selected_hp = self.hp_pool[0]
         self.selected_displacement = self.dm[0, 0]
 
-        # Plot
-        self.plot()
-
         # Initialize tabs
         self.manual.initialize()
         self.rms.initialize()
-        self.ready = True
-        # self.blrms.initialize()
+        self.ready = True  # Wait for tabs to get initialized
 
+    def enable(self):
+        """Enable tabs"""
+        self.enabled = True
+        self.plot()
+    
+    def disable(self):
+        """Disable tab"""
+        self.enabled = False
+        self.unplot()
 
     @property
     def selected_sc(self):
@@ -137,7 +141,7 @@ class SelectionTabs(tkinter.ttk.Notebook):
         ydata = sc.mag
         ydata_comp = sc.mag_comp
         self.root.sc_plot.update_line("selected", xdata, ydata)
-        self.root.sc_plot.update_line("selected_comp", xdata, ydata)
+        self.root.sc_plot.update_line("selected_comp", xdata, ydata_comp)
 
     def plot_blend(self):
         """Plot blend"""
@@ -149,6 +153,13 @@ class SelectionTabs(tkinter.ttk.Notebook):
         self.root.blend_plot.update_line("selected", xdata, ydata)
         self.root.blend_plot.update_line("selected_comp", xdata, ydata_comp)
 
+    def unplot(self):
+        """Unplot"""
+        self.root.main_plot.update_line("selected")
+        self.root.sc_plot.update_line("selected")
+        self.root.sc_plot.update_line("selected_comp")
+        self.root.blend_plot.update_line("selected")
+        self.root.blend_plot.update_line("selected_comp")
 
     def tab_changed(self, _):
         """Tab changed"""
@@ -159,4 +170,3 @@ class SelectionTabs(tkinter.ttk.Notebook):
                 self.manual.update_selected_blend()
             elif index == 1:
                 self.rms.update()
-

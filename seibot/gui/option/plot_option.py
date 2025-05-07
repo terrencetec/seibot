@@ -3,6 +3,7 @@ import tkinter
 
 import numpy as np
 
+from . import noise_option
 
 class PlotOption(tkinter.LabelFrame):
     """Plot option"""
@@ -18,7 +19,8 @@ class PlotOption(tkinter.LabelFrame):
         """
         super().__init__(master, text="Plot options")
 
-        self.root = root
+        self.master = master # Master is OptionPanel
+        self.root = root # Root is main.Root
 
         self.config(font=("Helvetica", 12, "bold"))
 
@@ -48,39 +50,36 @@ class PlotOption(tkinter.LabelFrame):
             variable=self.plot_style, value="Curves", command=self.plot_all
         )
 
-        plot_all_button.grid(row=0, column=0, columnspan=2, sticky="w")
-        plot_all_label.grid(row=1, column=0, sticky="w")
-        plot_bounds.grid(row=1, column=1, sticky="w")
-        plot_curves.grid(row=1, column=2, sticky="w")
-
-        self.plot_min_disp_var = tkinter.IntVar()
-        self.plot_min_disp_var.set(0)
-        self.plot_min_vel_var = tkinter.IntVar()
-        self.plot_min_vel_var.set(0)
-
-        plot_min_disp_button = tkinter.Checkbutton(
-            self, text="Plot minimum RMS displacement",
-            variable=self.plot_min_disp_var, command=self.plot_min_disp
-        )
-        plot_min_disp_button.grid(row=1, column=0, sticky="w")
-
-        plot_min_vel_button = tkinter.Checkbutton(
-            self, text="Plot minimum RMS velocity",
-            variable=self.plot_min_vel_var, command=self.plot_min_vel
-        )
-        plot_min_vel_button.grid(row=2, column=0, sticky="w")
-
         self.plot_witness_var = tkinter.IntVar()
         self.plot_witness_var.set(0)
         plot_witness_button = tkinter.Checkbutton(
             self, text="Plot witness sensor measurement",
             variable=self.plot_witness_var, command=self.plot_witness
         )
+
+        self.plot_selected_var = tkinter.IntVar()
+        self.plot_selected_var.set(0)
+        plot_selected_button = tkinter.Checkbutton(
+            self, text="Plot selected",
+            variable=self.plot_selected_var, command=self.plot_selected
+        )
+
+        self.noise = noise_option.NoiseOption(self, root)
+
+        plot_all_button.grid(row=0, column=0, columnspan=2, sticky="w")
+        plot_all_label.grid(row=1, column=0, sticky="w")
+        plot_bounds.grid(row=1, column=1, sticky="w")
+        plot_curves.grid(row=1, column=2, sticky="w")
+        self.noise.grid(row=2, column=0, columnspan=2, sticky="ensw")
+
         plot_witness_button.grid(row=3, column=0, sticky="w")
+        plot_selected_button.grid(row=4, column=0, sticky="w")
 
         self.buttons = [
-            plot_all_button, plot_bounds, plot_curves, plot_min_disp_button,
-        plot_min_vel_button, plot_witness_button]
+            plot_all_button, plot_bounds, plot_curves,
+            # plot_min_disp_button, plot_min_vel_button,
+            plot_witness_button, plot_selected_button]
+
         for button in self.buttons:
             button.config(state="disabled")
 
@@ -101,6 +100,7 @@ class PlotOption(tkinter.LabelFrame):
         self.witness = self.get_witness()
 
         self.enable()
+        self.noise.initialize()
 
     def get_all_displacement(self):
         """Get all displacement data
@@ -240,3 +240,11 @@ class PlotOption(tkinter.LabelFrame):
             self.root.main_plot.update_line("witness", self.f, self.witness)
         else:
             self.root.main_plot.update_line("witness")
+
+    def plot_selected(self):
+        """Plot selected"""
+        #Enable selecteion tab
+        if self.plot_selected_var.get():
+            self.master.selection_tabs.enable()
+        else:
+            self.master.selection_tabs.disable()

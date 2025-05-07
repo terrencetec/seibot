@@ -3,6 +3,7 @@ import tkinter
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 import matplotlib.style as mplstyle
 
 
@@ -27,7 +28,14 @@ class Plot(tkinter.Frame):
         self.fig = fig
         self.ax = ax
         self.canvas = FigureCanvasTkAgg(fig, self)
-        self.canvas.get_tk_widget().pack()
+        # self.canvas.get_tk_widget().pack()
+        toolbar = NavigationToolbar2Tk(self.canvas, self)
+        # toolbar.config(background="white")
+        # toolbar._message_label.config(background="white")
+        # toolbar.winfo_children()[0].config(background="white")
+        # toolbar.winfo_children()[-2].config(background="white")
+        toolbar.update()
+        self.canvas.get_tk_widget().pack(expand=1)
 
 
 class MainPlot(Plot):

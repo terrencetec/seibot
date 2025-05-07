@@ -184,7 +184,7 @@ class Evaluate:
         for i in range(len(rms_velocity_matrix)):
             for j in range(len(rms_velocity_matrix[0])):
                 f = self.f[mask]
-                velocity = 2*np.pi*f[mask]*self.displacement_matrix[i, j][mask] 
+                velocity = 2*np.pi*f*self.displacement_matrix[i, j][mask] 
                 rms_velocity_matrix[i, j] = self.get_rms(f, velocity)
 
         argmin = np.argmin(rms_velocity_matrix)
