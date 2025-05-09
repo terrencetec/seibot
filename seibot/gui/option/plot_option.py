@@ -29,6 +29,7 @@ class PlotOption(tkinter.LabelFrame):
         plot_all_frame.config(font=("Helvetica", 12, "italic"))
 
         plot_all_frame.grid(row=0, column=0, sticky="ewns")
+        plot_all_frame.columnconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
 
         self.plot_all_var = tkinter.IntVar()

@@ -97,4 +97,5 @@ class Export(tkinter.LabelFrame):
             filetypes=((".ini files", ".ini*"), ("All files", "*.*"))
         )
         filters = self.get_filter()
+        # TODO add a confirmation window
         filters.export(path)

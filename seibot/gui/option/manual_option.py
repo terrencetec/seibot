@@ -52,6 +52,8 @@ class ManualOption(tkinter.LabelFrame):
         blend_left.grid(row=2, column=1, sticky="e")
         blend_right.grid(row=2, column=3, sticky="e")
 
+        self.columnconfigure(1, weight=1)
+
         self.buttons = [
             self.sc_dropdown, sc_left, sc_right,
             self.blend_dropdown, blend_left, blend_right

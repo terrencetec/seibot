@@ -32,10 +32,10 @@ class RMSOption(tkinter.LabelFrame):
         band_frame = tkinter.LabelFrame(self, text="Select Band")
 
         self.band = tkinter.IntVar()
-        self.optimize_0_3e_2 = tkinter.Radiobutton(
-            band_frame, text="0 Hz - 0.03 Hz",
-            command=self._optimize_0_3e_2,
-            variable=self.band, value=0)
+        # self.optimize_0_3e_2 = tkinter.Radiobutton(
+        #     band_frame, text="0 Hz - 0.03 Hz",
+        #     command=self._optimize_0_3e_2,
+        #     variable=self.band, value=0)
         self.optimize_3e_2_1e_1 = tkinter.Radiobutton(
             band_frame, text="0.03 Hz - 0.1 Hz",
             command=self._optimize_3e_2_1e_1,
@@ -52,38 +52,38 @@ class RMSOption(tkinter.LabelFrame):
             band_frame, text="1 Hz - 3 Hz",
             command=self._optimize_1_3,
             variable=self.band, value=4)
-        self.optimize_3_10 = tkinter.Radiobutton(
-            band_frame, text="3 Hz - 10 Hz",
-            command=self._optimize_3_10,
-            variable=self.band, value=5)
-        self.optimize_10_30 = tkinter.Radiobutton(
-            band_frame, text="10 Hz - 30 Hz",
-            command=self._optimize_10_30,
-            variable=self.band, value=6)
-        self.optimize_30_100 = tkinter.Radiobutton(
-            band_frame, text="30 Hz - 100 Hz",
-            command=self._optimize_30_100,
-            variable=self.band, value=7)
+        # self.optimize_3_10 = tkinter.Radiobutton(
+        #     band_frame, text="3 Hz - 10 Hz",
+        #     command=self._optimize_3_10,
+        #     variable=self.band, value=5)
+        # self.optimize_10_30 = tkinter.Radiobutton(
+        #     band_frame, text="10 Hz - 30 Hz",
+        #     command=self._optimize_10_30,
+        #     variable=self.band, value=6)
+        # self.optimize_30_100 = tkinter.Radiobutton(
+        #     band_frame, text="30 Hz - 100 Hz",
+        #     command=self._optimize_30_100,
+        #     variable=self.band, value=7)
         self.optimize_custom = tkinter.Radiobutton(
             band_frame, text="Custom",
             command=self._optimize_custom,
             variable=self.band, value=8)
 
-        self.frequency_lower = 0.
-        self.frequency_upper = 0.03
+        self.frequency_lower = 0.03
+        self.frequency_upper = 0.1
 
         frequency_lower_label = tkinter.Label(
             self, text="Frequency band (Hz) (lower)")
         self.frequency_lower_entry = tkinter.Entry(
             self, justify="right", width=10)
-        self.frequency_lower_entry.insert(0, 0.)
+        self.frequency_lower_entry.insert(0, 0.03)
         self.frequency_lower_entry.bind("<Return>", self.update_band)
 
         frequency_upper_label = tkinter.Label(
             self, text="Frequency band (Hz) (upper)")
         self.frequency_upper_entry = tkinter.Entry(
             self, justify="right", width=10)
-        self.frequency_upper_entry.insert(0, 0.03)
+        self.frequency_upper_entry.insert(0, 0.1)
         self.frequency_upper_entry.bind("<Return>", self.update_band)
 
         self.apply = tkinter.Button(
@@ -95,14 +95,14 @@ class RMSOption(tkinter.LabelFrame):
         self.optimize_band_button.grid(row=3, column=0, sticky="w")
         band_frame.grid(row=4, column=0, sticky="ensw", columnspan=2)
         band_frame.columnconfigure(0, weight=1)
-        self.optimize_0_3e_2.grid(row=0, column=2, sticky="w")
+        # self.optimize_0_3e_2.grid(row=0, column=2, sticky="w")
         self.optimize_3e_2_1e_1.grid(row=1, column=2, sticky="w")
         self.optimize_1e_1_3e_1.grid(row=2, column=2, sticky="w")
         self.optimize_3e_1_1.grid(row=3, column=2, sticky="w")
         self.optimize_1_3.grid(row=4, column=2, sticky="w")
-        self.optimize_3_10.grid(row=5, column=2, sticky="w")
-        self.optimize_10_30.grid(row=6, column=2, sticky="w")
-        self.optimize_30_100.grid(row=7, column=2, sticky="w")
+        # self.optimize_3_10.grid(row=5, column=2, sticky="w")
+        # self.optimize_10_30.grid(row=6, column=2, sticky="w")
+        # self.optimize_30_100.grid(row=7, column=2, sticky="w")
         self.optimize_custom.grid(row=8, column=2, sticky="w")
 
         frequency_lower_label.grid(row=5, column=0, sticky="w")
@@ -111,19 +111,21 @@ class RMSOption(tkinter.LabelFrame):
         self.frequency_upper_entry.grid(row=6, column=1, sticky="e")
         self.apply.grid(row=7, column=1, sticky="e")
 
+        self.columnconfigure(1, weight=1)
+
         self.buttons = [
             optimize_displacement, optimize_velocity,
             self.optimize_band_button,
         ]
         self.band_buttons = [
-            self.optimize_0_3e_2,
+            # self.optimize_0_3e_2,
             self.optimize_3e_2_1e_1,
             self.optimize_1e_1_3e_1,
             self.optimize_3e_1_1,
             self.optimize_1_3,
-            self.optimize_3_10,
-            self.optimize_10_30,
-            self.optimize_30_100,
+            # self.optimize_3_10,
+            # self.optimize_10_30,
+            # self.optimize_30_100,
             self.optimize_custom,
         ]
 
