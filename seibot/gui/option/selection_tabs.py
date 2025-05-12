@@ -39,7 +39,6 @@ class SelectionTabs(tkinter.ttk.Notebook):
         self.enabled = False
         self.disable()
 
-
     def initialize(self):
         """Initialize"""
         # Get data from root.seibot
@@ -121,6 +120,7 @@ class SelectionTabs(tkinter.ttk.Notebook):
             self.iso.high_pass_filter = self.selected_hp
             displacement = self.iso.get_displacement(self.seismic_noise)
             self.selected_displacement = displacement
+            self.master.performance.update_rms()
         
     def plot(self):
         """Plot displacement, sensor correction and blends"""

@@ -1,3 +1,4 @@
+import numpy as np
 import tkinter
 
 
@@ -99,10 +100,26 @@ class Performance(tkinter.LabelFrame):
 
     def update_rms(self):
         """Update rms values"""
+        selection = self.option_var.get()
         f = self.master.selection_tabs.f
-        displacement = self.master.selection_tabs.selected_displacement
+        displacement = self.master.selection_tabs.selected_displacement.copy()
+        if selection == "velocity":
+            displacement *= 2*np.pi*f
         evaluate = self.root.seibot.evaluate
         overall = evaluate.get_rms(f, displacement) * 1e9
+        mask = (f>3e-2) * (f<1e-1)
+        rms_3e2_1e1 = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
+        mask = (f>1e-1) * (f<3e-1)
+        rms_1e1_3e1 = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
+        mask = (f>3e-1) * (f<1)
+        rms_3e1_1 = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
+        mask = (f>1) * (f<3)
+        rms_1_3 = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
+
         self.selected_rms.config(text=f"{overall:.3g}")
+        self.selected_rms_3e2_1e1.config(text=f"{rms_3e2_1e1:.3g}")
+        self.selected_rms_1e1_3e1.config(text=f"{rms_1e1_3e1:.3g}")
+        self.selected_rms_3e1_1.config(text=f"{rms_3e1_1:.3g}")
+        self.selected_rms_1_3.config(text=f"{rms_1_3:.3g}")
 
 

@@ -3,6 +3,7 @@
 import configparser
 
 import numpy as np
+import ezca
 
 import seibot.data
 import seibot.evaluate
@@ -158,3 +159,19 @@ class Seibot:
         """
         best_filters = self.get_best_filters()
         best_filters.export(path)
+
+    def get_current_filters(self):
+        """Get current filters"""
+        # Sensor correction
+        ezca_obj = ezca.Ezca(prefix="", ifo="")
+        cur_chan = self.config.get("Sensor correction channels", "cur_chan")
+        filter_chan = self.config.get(
+            "Sensor correction channels", "filter_chan")
+        try:
+            cur = ezca_obj.read(cur_chan)
+        except ezca.errors.EzcaConnectError:
+            print("Ezca error")
+            return
+        
+        cur = int(cur)
+        print(cur)
