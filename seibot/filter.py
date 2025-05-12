@@ -19,9 +19,34 @@ class Filter(control.TransferFunction):
     fm : list of int
         The engaged FMs of this filter
     """
-    def __init__(self, *args):
+    def __init__(
+            self, tf=None,
+            filter_file=None, module=None, fm=None,
+            f=None, inverse_filter=None):
         """Constructor"""
-        super().__init__(*args)
+        if inverse_filter is None:
+            inverse_filter = control.tf([1], [1])
+        
+        if tf is not None:
+            pass
+        elif (filter_file is not None
+                and module is not None
+                and fm is not None):
+            foton = seibot.foton.Foton(filter_file)
+            tf = foton.get_filter_tf(module, fm)
+            self.filter_file = filter_file
+            self.module = module
+            self.fm = fm
+        else:
+            raise ValueError(
+                "Either tf or (filter_file, module, fm) must be specified")
+        tf = tf / inverse_filter
+        super().__init__(tf)
+
+        if f is not None:
+            self.mag = abs(tf(1j*2*np.pi*f))
+            self.mag_comp = abs((1-tf)(1j*2*np.pi*f))
+            self.f = f
         
     @property
     def module(self):
@@ -75,7 +100,17 @@ class Filter(control.TransferFunction):
         """mag_comp.setter"""
         self._mag_comp = _mag_comp
 
+    @property
+    def f(self):
+        """Frequency"""
+        return self._f
 
+    @f.setter
+    def f(self, _f):
+        """f.setter"""
+        self._f = _f
+
+# def make_filter(filter_file, module
 class FilterPool(list):
     """Filter pool"""
     def __init__(self, f, filter_config, inverse_filter=None):
@@ -134,19 +169,25 @@ class FilterPool(list):
             # Convert fm str to list.
             fm_list = [int(fm.strip()) for fm in fm.split(",")]
 
-            # get_filter_tf is slow.
-            tf = foton.get_filter_tf(module, fm_list)
-            tf = tf / inverse_filter
+            filter_obj = Filter(
+                filter_file=filter_file,
+                module=module,
+                fm=fm_list,
+                f=f,
+                inverse_filter=inverse_filter)
+            # # get_filter_tf is slow.
+            # tf = foton.get_filter_tf(module, fm_list)
+            # tf = tf / inverse_filter
 
-            # Construct a filter instance
-            filter_obj = Filter(tf)
-            filter_obj.filter_file = filter_file
-            filter_obj.module = module
-            filter_obj.fm = fm
-            # Storing the magnitude response makes future calculations
-            # faster.
-            filter_obj.mag = abs(tf(1j*2*np.pi*f))
-            filter_obj.mag_comp = abs((1-tf)(1j*2*np.pi*f))
+            # # Construct a filter instance
+            # filter_obj = Filter(tf)
+            # filter_obj.filter_file = filter_file
+            # filter_obj.module = module
+            # filter_obj.fm = fm
+            # # Storing the magnitude response makes future calculations
+            # # faster.
+            # filter_obj.mag = abs(tf(1j*2*np.pi*f))
+            # filter_obj.mag_comp = abs((1-tf)(1j*2*np.pi*f))
 
             # Append the instance to the pool
             self.append(filter_obj)

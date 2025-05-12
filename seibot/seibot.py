@@ -174,4 +174,7 @@ class Seibot:
             return
         
         cur = int(cur)
-        print(cur)
+        filter_chan = filter_chan.replace("*", f"{cur}")
+        module = filter_chan.lstrip("L1:ISI-")
+        
+
