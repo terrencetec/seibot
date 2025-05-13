@@ -165,6 +165,8 @@ class Seibot:
         # Sensor correction
         ezca_obj = ezca.Ezca(prefix="", ifo="")
         cur_chan = self.config.get("Sensor correction channels", "cur_chan")
+        filter_file = self.config.get(
+            "Sensor correction channels", "filter_file")
         filter_chan = self.config.get(
             "Sensor correction channels", "filter_chan")
         try:
@@ -175,6 +177,32 @@ class Seibot:
         
         cur = int(cur)
         filter_chan = filter_chan.replace("*", f"{cur}")
+
+        # Find FMs
+        swstat_mask = ezca_obj.LIGOFilter(filter_chan).get_current_swstat_mask() 
+        fm = []
+        for string in swstat_mask:
+            if "FM" in string:
+                fm.append(int(string.lstrip("FM")))
+
+        # Find Module
         module = filter_chan.lstrip("L1:ISI-")
+
+        # Find inverse filter
+        sc_inverse = self.config.get(
+            "Sensor correction channels", "inverse_filter")
+        inverse_filters = seibot.filter.InverseFilters()
+        inverse_filter = getattr(inverse_filters, sc_inverse)
+
+        # Get sensor correction filter
+        sc = seibot.filter.Filter(
+            filter_file=filter_file,
+            module=module,
+            fm=fm,
+            f=self.data.f,
+            inverse_filter=inverse_filter)
+
+        return sc
         
+
 
