@@ -130,8 +130,8 @@ class Seibot:
         lp_suffix = self.config.get("Blend channels", "low_pass_suffix")
         hp_suffix = self.config.get("Blend channels", "high_pass_suffix")
 
-        lp_chan = blend_channel + lp_suffix
-        hp_chan = blend_channel + hp_suffix 
+        lp_chan = blend_chan + lp_suffix
+        hp_chan = blend_chan + hp_suffix 
 
         # Get filter instances
         current_sc = self.get_current_filter(
