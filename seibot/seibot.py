@@ -37,6 +37,9 @@ class Seibot:
         self.config.optionxform = str
         self.config.read(config)
 
+        # Read Defaults
+        self.filter_file = self.config.get("Defaults", "filter_file")
+
         # time spent 200ms
         # Fetch sensor noise and plant data from database/real-time.
         self.data = seibot.data.Data(config)
@@ -90,6 +93,60 @@ class Seibot:
             self.isolation_system, self.filter_configurations,
             f, seismic_noise)
         self.evaluate_method = getattr(self.evaluate, self.criterion)
+        
+
+        # Get current filters
+        self.ezca = ezca.Ezca(prefix="", ifo="")
+
+        ## Find currently used channel number
+        sc_cur_chan = self.config.get("Sensor correction channels", "cur_chan")
+        blend_cur_chan = self.config.get("Blend channels", "cur_chan")
+        try:
+            sc_cur = int(self.ezca.read(sc_cur_chan))
+            blend_cur = int(self.ezca.read(blend_cur_chan))
+        except ezca.errors.EzcaConnectionError:
+            print("Ezca error")
+
+        ## Check number
+        if sc_cur > 4:
+            print(f"Sensor correction channel: {sc_cur} out of range."
+                   " Reset to 1.")
+            sc_cur = 1
+
+        if blend_cur > 8:
+            print(f"Blend channel: {blend_cur} out of range."
+                   " Reset to 1.")
+            blend_cur = 1
+
+        ## Make filter channel
+        sc_chan = self.config.get("Sensor correction channels", "filter_chan")
+        blend_chan = self.config.get("Blend channels", "filter_chan")
+
+        ## Replace wildcard
+        sc_chan = sc_chan.replace("*", f"{sc_cur}")
+        blend_chan = blend_chan.replace("*", f"{blend_cur}")
+
+        ## Low-pass, high-pass channels
+        lp_suffix = self.config.get("Blend channels", "low_pass_suffix")
+        hp_suffix = self.config.get("Blend channels", "high_pass_suffix")
+
+        lp_chan = blend_channel + lp_suffix
+        hp_chan = blend_channel + hp_suffix 
+
+        # Get filter instances
+        current_sc = self.get_current_filter(
+            filter_chan=sc_chan, filter_file=self.filter_file,
+            inverse_filter=sc_inverse_filter)
+        current_lp = self.get_current_filter(
+            filter_chan=lp_chan, filter_file=self.filter_file,
+            inverse_filter=lp_inverse_filter)
+        current_hp = self.get_current_filter(
+            filter_chan=hp_chan, filter_file=self.filter_file,
+            inverse_filter=hp_inverse_filter)
+
+        # Make current filters
+        self.current_filters = seibot.filter.FilterConfiguration(
+            sc=current_sc, lp=current_lp, hp=current_hp)
         
     def get_isolation_system(self, data):
         """Construct an isolation system instance from a data instance
@@ -160,26 +217,26 @@ class Seibot:
         best_filters = self.get_best_filters()
         best_filters.export(path)
 
-    def get_current_filters(self):
-        """Get current filters"""
-        # Sensor correction
-        ezca_obj = ezca.Ezca(prefix="", ifo="")
-        cur_chan = self.config.get("Sensor correction channels", "cur_chan")
-        filter_file = self.config.get(
-            "Sensor correction channels", "filter_file")
-        filter_chan = self.config.get(
-            "Sensor correction channels", "filter_chan")
-        try:
-            cur = ezca_obj.read(cur_chan)
-        except ezca.errors.EzcaConnectError:
-            print("Ezca error")
-            return
+    def get_current_filter(
+            self, filter_chan, filter_file, inverse_filter):
+        """Get a filter from engaged FMs.
         
-        cur = int(cur)
-        filter_chan = filter_chan.replace("*", f"{cur}")
+        Parameters
+        ----------
+        filter_channel : str
+            Filter channel.
+        filter_file : str
+            Path to Foton filter file.
+        inverse filter : TransferFunction
+            Inverse filter embedded in filter.
 
-        # Find FMs
-        swstat_mask = ezca_obj.LIGOFilter(filter_chan).get_current_swstat_mask() 
+        Returns
+        -------
+        seibot.filter.Filter
+            Filter.
+        """
+        # Find engaged FMs
+        swstat_mask = self.ezca.LIGOFilter(filter_chan).get_current_swstat_mask() 
         fm = []
         for string in swstat_mask:
             if "FM" in string:
@@ -188,21 +245,15 @@ class Seibot:
         # Find Module
         module = filter_chan.lstrip("L1:ISI-")
 
-        # Find inverse filter
-        sc_inverse = self.config.get(
-            "Sensor correction channels", "inverse_filter")
-        inverse_filters = seibot.filter.InverseFilters()
-        inverse_filter = getattr(inverse_filters, sc_inverse)
-
-        # Get sensor correction filter
-        sc = seibot.filter.Filter(
+        filter_ = seibot.filter.Filter(
             filter_file=filter_file,
             module=module,
             fm=fm,
             f=self.data.f,
             inverse_filter=inverse_filter)
 
-        return sc
+        return filter_
+
         
 
 
