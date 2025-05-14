@@ -73,6 +73,7 @@ class MainPlot(Plot):
         self.threshold_bound_ln = self.ax.fill_between([], [], [])
 
         self.witness_ln, = self.ax.loglog([], [], "C5", zorder=0)
+        self.current_ln, = self.ax.loglog([], [], "C0", zorder=1)
 
         self.ax.set_title("Isolation table motion")
         self.ax.set_ylabel(
@@ -123,6 +124,9 @@ class MainPlot(Plot):
         elif line == "witness":
             ln = self.witness_ln
             label = "Witness measurement"
+        elif line == "current":
+            ln = self.current_ln
+            label = "Current"
         else:
             raise ValueError(f"{line} line does not exist.")
 
@@ -158,6 +162,8 @@ class MainPlot(Plot):
             self.inertial_ln = ln
         elif line == "witness":
             self.witness_ln = ln
+        elif line == "current":
+            self.current_ln = ln
         
         self.update_legend()
         self.canvas.draw()
@@ -283,7 +289,8 @@ class MainPlot(Plot):
             self.all_bound_ln,
             self.threshold_ln_label,
             self.threshold_bound_ln,
-            self.witness_ln
+            self.witness_ln,
+            self.current_ln,
         ]
         noise_handles = [
             self.seismic_ln,
@@ -320,11 +327,13 @@ class SensorCorrectionPlot(Plot):
         self.min_disp_ln, = self.ax.loglog([], [], "C2", zorder=3)
         self.min_vel_ln, = self.ax.loglog([], [], "C3", zorder=4)
         self.tebo_ln, = self.ax.loglog([], [], "C4", zorder=5)
+        self.current_ln, = self.ax.loglog([], [], "C0", zorder=1)
 
         self.selected_comp_ln, = self.ax.loglog([], [], "C1--", zorder=2)
         self.min_disp_comp_ln, = self.ax.loglog([], [], "C2--", zorder=3)
         self.min_vel_comp_ln, = self.ax.loglog([], [], "C3--", zorder=4)
         self.tebo_comp_ln, = self.ax.loglog([], [], "C4--", zorder=5)
+        self.current_comp_ln, = self.ax.loglog([], [], "C0--", zorder=1)
 
         self.ax.set_title("Sensor correction filters")
         self.ax.set_ylabel("Amplitude")
@@ -359,6 +368,9 @@ class SensorCorrectionPlot(Plot):
         elif line == "tebo":
             ln = self.tebo_ln
             label = "TEBO sensor correction"
+        elif line == "current":
+            ln = self.current_ln
+            label = "Current sensor correction"
         elif line == "selected_comp":
             ln = self.selected_comp_ln
             label = "Selected transmissivity"
@@ -371,6 +383,9 @@ class SensorCorrectionPlot(Plot):
         elif line == "tebo_comp":
             ln = self.tebo_comp_ln
             label = "TEBO transmissivity"
+        elif line == "current_comp":
+            ln = self.current_comp_ln
+            label = "Current transmissivity"
         else:
             raise ValueError(f"{line} line does not exist.")
 
@@ -395,6 +410,8 @@ class SensorCorrectionPlot(Plot):
             self.min_vel_ln = ln
         elif line == "tebo":
             self.tebo_ln = ln
+        elif line == "current":
+            self.current_ln = ln
         elif line == "selected_comp":
             self.selected_comp_ln = ln
         elif line == "min_disp_comp":
@@ -403,6 +420,8 @@ class SensorCorrectionPlot(Plot):
             self.min_vel_comp_ln = ln
         elif line == "tebo_comp":
             self.tebo_comp_ln = ln
+        elif line == "current_comp":
+            self.current_comp_ln = ln
 
         self.update_legend()
         self.canvas.draw()
@@ -413,13 +432,15 @@ class SensorCorrectionPlot(Plot):
             self.selected_ln,
             self.min_disp_ln,
             self.min_vel_ln,
-            self.tebo_ln
+            self.tebo_ln,
+            self.current_ln,
         ]
         filter2_handles = [
             self.selected_comp_ln,
             self.min_disp_comp_ln,
             self.min_vel_comp_ln,
-            self.tebo_comp_ln
+            self.tebo_comp_ln,
+            self.current_comp_ln,
         ]
 
         for artist in self.ax.artists:
@@ -452,11 +473,13 @@ class BlendPlot(Plot):
         self.min_disp_ln, = self.ax.loglog([], [], "C2", zorder=3)
         self.min_vel_ln, = self.ax.loglog([], [], "C3", zorder=4)
         self.tebo_ln, = self.ax.loglog([], [], "C4", zorder=5)
+        self.current_ln, = self.ax.loglog([], [], "C0", zorder=1)
 
         self.selected_comp_ln, = self.ax.loglog([], [], "C1--", zorder=2)
         self.min_disp_comp_ln, = self.ax.loglog([], [], "C2--", zorder=3)
         self.min_vel_comp_ln, = self.ax.loglog([], [], "C3--", zorder=4)
         self.tebo_comp_ln, = self.ax.loglog([], [], "C4--", zorder=5)
+        self.current_comp_ln, = self.ax.loglog([], [], "C0--", zorder=1)
 
         self.ax.set_title("Complementary filters (blends)")
         self.ax.set_ylabel("Amplitude")
@@ -491,6 +514,9 @@ class BlendPlot(Plot):
         elif line == "tebo":
             ln = self.tebo_ln
             label = "TEBO low-pass"
+        elif line == "current":
+            ln = self.current_ln
+            label = "Current low-pass"
         elif line == "selected_comp":
             ln = self.selected_comp_ln
             label = "Selected high-pass"
@@ -503,6 +529,9 @@ class BlendPlot(Plot):
         elif line == "tebo_comp":
             ln = self.tebo_comp_ln
             label = "TEBO high-pass"
+        elif line == "current_comp":
+            ln = self.current_comp_ln
+            label = "Current high-pass"
         else:
             raise ValueError(f"{line} line does not exist.")
         
@@ -526,6 +555,8 @@ class BlendPlot(Plot):
             self.min_vel_ln = ln
         elif line == "tebo":
             self.tebo_ln = ln
+        elif line == "current":
+            self.current_ln = ln
         elif line == "selected_comp":
             self.selected_comp_ln = ln
         elif line == "min_disp_comp":
@@ -534,6 +565,8 @@ class BlendPlot(Plot):
             self.min_vel_comp_ln = ln
         elif line == "tebo_comp":
             self.tebo_comp_ln = ln
+        elif line == "current_comp":
+            self.current_comp_ln = ln
 
         self.update_legend()
         self.canvas.draw()
@@ -544,13 +577,15 @@ class BlendPlot(Plot):
             self.selected_ln,
             self.min_disp_ln,
             self.min_vel_ln,
-            self.tebo_ln
+            self.tebo_ln,
+            self.current_ln,
         ]
         filter2_handles = [
             self.selected_comp_ln,
             self.min_disp_comp_ln,
             self.min_vel_comp_ln,
-            self.tebo_comp_ln
+            self.tebo_comp_ln,
+            self.current_comp_ln,
         ]
 
         for artist in self.ax.artists:

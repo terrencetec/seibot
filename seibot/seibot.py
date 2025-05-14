@@ -104,49 +104,50 @@ class Seibot:
         try:
             sc_cur = int(self.ezca.read(sc_cur_chan))
             blend_cur = int(self.ezca.read(blend_cur_chan))
-        except ezca.errors.EzcaConnectionError:
+
+            ## Check number
+            if sc_cur > 4:
+                print(f"Sensor correction channel: {sc_cur} out of range."
+                       " Reset to 1.")
+                sc_cur = 1
+
+            if blend_cur > 8:
+                print(f"Blend channel: {blend_cur} out of range."
+                       " Reset to 1.")
+                blend_cur = 1
+
+            ## Make filter channel
+            sc_chan = self.config.get("Sensor correction channels", "filter_chan")
+            blend_chan = self.config.get("Blend channels", "filter_chan")
+
+            ## Replace wildcard
+            sc_chan = sc_chan.replace("*", f"{sc_cur}")
+            blend_chan = blend_chan.replace("*", f"{blend_cur}")
+
+            ## Low-pass, high-pass channels
+            lp_suffix = self.config.get("Blend channels", "low_pass_suffix")
+            hp_suffix = self.config.get("Blend channels", "high_pass_suffix")
+
+            lp_chan = blend_chan + lp_suffix
+            hp_chan = blend_chan + hp_suffix 
+
+            # Get filter instances
+            current_sc = self.get_current_filter(
+                filter_chan=sc_chan, filter_file=self.filter_file,
+                inverse_filter=sc_inverse_filter)
+            current_lp = self.get_current_filter(
+                filter_chan=lp_chan, filter_file=self.filter_file,
+                inverse_filter=lp_inverse_filter)
+            current_hp = self.get_current_filter(
+                filter_chan=hp_chan, filter_file=self.filter_file,
+                inverse_filter=hp_inverse_filter)
+
+            # Make current filters
+            self.current_filters = seibot.filter.FilterConfiguration(
+                sc=current_sc, lp=current_lp, hp=current_hp)
+        except ezca.errors.EzcaConnectError:
             print("Ezca error")
-
-        ## Check number
-        if sc_cur > 4:
-            print(f"Sensor correction channel: {sc_cur} out of range."
-                   " Reset to 1.")
-            sc_cur = 1
-
-        if blend_cur > 8:
-            print(f"Blend channel: {blend_cur} out of range."
-                   " Reset to 1.")
-            blend_cur = 1
-
-        ## Make filter channel
-        sc_chan = self.config.get("Sensor correction channels", "filter_chan")
-        blend_chan = self.config.get("Blend channels", "filter_chan")
-
-        ## Replace wildcard
-        sc_chan = sc_chan.replace("*", f"{sc_cur}")
-        blend_chan = blend_chan.replace("*", f"{blend_cur}")
-
-        ## Low-pass, high-pass channels
-        lp_suffix = self.config.get("Blend channels", "low_pass_suffix")
-        hp_suffix = self.config.get("Blend channels", "high_pass_suffix")
-
-        lp_chan = blend_chan + lp_suffix
-        hp_chan = blend_chan + hp_suffix 
-
-        # Get filter instances
-        current_sc = self.get_current_filter(
-            filter_chan=sc_chan, filter_file=self.filter_file,
-            inverse_filter=sc_inverse_filter)
-        current_lp = self.get_current_filter(
-            filter_chan=lp_chan, filter_file=self.filter_file,
-            inverse_filter=lp_inverse_filter)
-        current_hp = self.get_current_filter(
-            filter_chan=hp_chan, filter_file=self.filter_file,
-            inverse_filter=hp_inverse_filter)
-
-        # Make current filters
-        self.current_filters = seibot.filter.FilterConfiguration(
-            sc=current_sc, lp=current_lp, hp=current_hp)
+            self.current_filters = None
         
     def get_isolation_system(self, data):
         """Construct an isolation system instance from a data instance

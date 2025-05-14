@@ -56,6 +56,7 @@ class OptionPanel(tkinter.LabelFrame):
         self.plot_option.initialize()
         self.selection_tabs.initialize()
         self.export_option.initialize()
+        self.performance.initialize()
         # self.manual_option.initialize()
         # self.threshold_option.initialize()
         # self.noise_option.initialize()

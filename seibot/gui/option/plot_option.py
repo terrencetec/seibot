@@ -58,6 +58,13 @@ class PlotOption(tkinter.LabelFrame):
             variable=self.plot_witness_var, command=self.plot_witness
         )
 
+        self.plot_current_var = tkinter.IntVar()
+        self.plot_current_var.set(0)
+        plot_current_button = tkinter.Checkbutton(
+            self, text="Plot current",
+            variable=self.plot_current_var, command=self.plot_current
+        )
+
         self.plot_selected_var = tkinter.IntVar()
         self.plot_selected_var.set(0)
         plot_selected_button = tkinter.Checkbutton(
@@ -74,12 +81,13 @@ class PlotOption(tkinter.LabelFrame):
         self.noise.grid(row=2, column=0, columnspan=2, sticky="ensw")
 
         plot_witness_button.grid(row=3, column=0, sticky="w")
-        plot_selected_button.grid(row=4, column=0, sticky="w")
+        plot_current_button.grid(row=4, column=0, sticky="w")
+        plot_selected_button.grid(row=5, column=0, sticky="w")
 
         self.buttons = [
             plot_all_button, plot_bounds, plot_curves,
             # plot_min_disp_button, plot_min_vel_button,
-            plot_witness_button, plot_selected_button]
+            plot_witness_button, plot_current_button, plot_selected_button]
 
         for button in self.buttons:
             button.config(state="disabled")
@@ -99,6 +107,7 @@ class PlotOption(tkinter.LabelFrame):
         self.min_disp, self.min_disp_filters = self.get_min_disp()
         self.min_vel, self.min_vel_filters = self.get_min_vel()
         self.witness = self.get_witness()
+        self.current, self.current_filters = self.get_current()
 
         self.enable()
         self.noise.initialize()
@@ -181,6 +190,26 @@ class PlotOption(tkinter.LabelFrame):
         witness = seibot.data.witness_sensor  # This could be a None object.
         return witness
 
+    def get_current(self):
+        """Get current displacement and current filters
+        
+        Returns
+        -------
+        current : array or None
+            The current prediction
+        current_filters : seibot.filter.FilterConfiguration
+            The currently engaged filters
+        """
+        current_filters = self.root.seibot.current_filters
+        if current_filters is None:
+            return None, None
+        iso = self.root.seibot.isolation_system
+        seismic = self.root.seibot.data.seismic_noise
+        iso.filter_configuration = current_filters
+        current = iso.get_displacement(seismic)
+
+        return current, current_filters
+
     def plot_all(self):
         """Plot all"""
         if self.plot_all_var.get():
@@ -241,6 +270,30 @@ class PlotOption(tkinter.LabelFrame):
             self.root.main_plot.update_line("witness", self.f, self.witness)
         else:
             self.root.main_plot.update_line("witness")
+
+    def plot_current(self):
+        """Plot current"""
+        if self.plot_current_var.get() and self.current is not None:
+            self.root.main_plot.update_line("current", self.f, self.current)
+        else:
+            self.root.main_plot.update_line("current")
+
+        if self.plot_current_var.get() and self.current_filters is not None:
+            sc = self.current_filters.sc
+            lp = self.current_filters.lp
+            hp = self.current_filters.hp
+
+            self.root.sc_plot.update_line("current", self.f, sc.mag)
+            self.root.sc_plot.update_line("current_comp", self.f, sc.mag_comp)
+
+            self.root.blend_plot.update_line("current", self.f, lp.mag)
+            self.root.blend_plot.update_line("current_comp", self.f, hp.mag)
+        else:
+            self.root.sc_plot.update_line("current")
+            self.root.sc_plot.update_line("current_comp")
+
+            self.root.blend_plot.update_line("current")
+            self.root.blend_plot.update_line("current_comp")
 
     def plot_selected(self):
         """Plot selected"""

@@ -76,27 +76,65 @@ class Performance(tkinter.LabelFrame):
         performance_frame.columnconfigure(0, weight=1)
         # self.all_label.grid(row=0, column=0, sticky="w")
         frequency_label.grid(row=0, column=0, sticky="w")
-        all_label.grid(row=0, column=1,)
-        label_3e2_1e1.grid(row=0, column=2)
-        label_1e1_3e1.grid(row=0, column=3)
-        label_3e1_1.grid(row=0, column=4)
-        label_1_3.grid(row=0, column=5)
-        self.current_label.grid(row=1, column=0, sticky="w")
+        all_label.grid(row=1, column=0, sticky="w")
+        label_3e2_1e1.grid(row=2, column=0, sticky="w")
+        label_1e1_3e1.grid(row=3, column=0, sticky="w")
+        label_3e1_1.grid(row=4, column=0, sticky="w")
+        label_1_3.grid(row=5, column=0, sticky="w")
+        self.current_label.grid(row=0, column=1, sticky="w")
         self.current_rms.grid(row=1, column=1, sticky="w")
-        self.current_rms_3e2_1e1.grid(row=1, column=2, sticky="w")
-        self.current_rms_1e1_3e1.grid(row=1, column=3, sticky="w")
-        self.current_rms_3e1_1.grid(row=1, column=4, sticky="w")
-        self.current_rms_1_3.grid(row=1, column=5, sticky="w")
-        self.selected_label.grid(row=2, column=0, sticky="w")
-        self.selected_rms.grid(row=2, column=1, sticky="w")
+        self.current_rms_3e2_1e1.grid(row=2, column=1, sticky="w")
+        self.current_rms_1e1_3e1.grid(row=3, column=1, sticky="w")
+        self.current_rms_3e1_1.grid(row=4, column=1, sticky="w")
+        self.current_rms_1_3.grid(row=5, column=1, sticky="w")
+        self.selected_label.grid(row=0, column=2, sticky="w")
+        self.selected_rms.grid(row=1, column=2, sticky="w")
         self.selected_rms_3e2_1e1.grid(row=2, column=2, sticky="w")
-        self.selected_rms_1e1_3e1.grid(row=2, column=3, sticky="w")
-        self.selected_rms_3e1_1.grid(row=2, column=4, sticky="w")
-        self.selected_rms_1_3.grid(row=2, column=5, sticky="w")
+        self.selected_rms_1e1_3e1.grid(row=3, column=2, sticky="w")
+        self.selected_rms_3e1_1.grid(row=4, column=2, sticky="w")
+        self.selected_rms_1_3.grid(row=5, column=2, sticky="w")
+
+        self.buttons = [self.displacement_button, self.velocity_button]
+        for button in self.buttons:
+            button.config(state="disabled")
+
+    def initialize(self):
+        """Initialize"""
+        for button in self.buttons:
+            button.config(state="normal")
+
+        self.update_current()
 
     def option_clicked(self):
         """Option clicked"""
         self.update_rms()
+        self.update_current()
+
+    def update_current(self):
+        """Get current performance"""
+        selection = self.option_var.get()
+        f = self.master.selection_tabs.f
+        if self.master.plot_option.current is None:
+            return
+        displacement = self.master.plot_option.current.copy()
+        if selection == "velocity":
+            displacement *= 2*np.pi*f
+        evaluate = self.root.seibot.evaluate
+        overall = evaluate.get_rms(f, displacement) * 1e9
+        mask = (f>3e-2) * (f<1e-1)
+        rms_3e2_1e1 = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
+        mask = (f>1e-1) * (f<3e-1)
+        rms_1e1_3e1 = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
+        mask = (f>3e-1) * (f<1)
+        rms_3e1_1 = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
+        mask = (f>1) * (f<3)
+        rms_1_3 = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
+
+        self.current_rms.config(text=f"{overall:.3g}")
+        self.current_rms_3e2_1e1.config(text=f"{rms_3e2_1e1:.3g}")
+        self.current_rms_1e1_3e1.config(text=f"{rms_1e1_3e1:.3g}")
+        self.current_rms_3e1_1.config(text=f"{rms_3e1_1:.3g}")
+        self.current_rms_1_3.config(text=f"{rms_1_3:.3g}")
 
     def update_rms(self):
         """Update rms values"""
