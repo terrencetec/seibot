@@ -145,8 +145,8 @@ class Seibot:
             # Make current filters
             self.current_filters = seibot.filter.FilterConfiguration(
                 sc=current_sc, lp=current_lp, hp=current_hp)
-        except ezca.errors.EzcaConnectError:
-            print("Ezca error")
+        except ezca.errors.EzcaConnectError as e:
+            print("Ezca error", e)
             self.current_filters = None
         
     def get_isolation_system(self, data):
