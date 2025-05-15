@@ -43,27 +43,28 @@ class Performance(tkinter.LabelFrame):
 
         self.current_label = tkinter.Label(performance_frame, text="Current:")
         self.current_rms = tkinter.Label(
-            performance_frame, text="-", relief=tkinter.SUNKEN, width=10)
+            performance_frame, text="-", relief=tkinter.SUNKEN, width=10,
+            bg="white")
         self.current_rms_3e2_1e1 = tkinter.Label(
-            performance_frame, text="-", relief=tkinter.SUNKEN, width=10)
+            performance_frame, text="-", relief=tkinter.SUNKEN, width=10, bg="white")
         self.current_rms_1e1_3e1 = tkinter.Label(
-            performance_frame, text="-", relief=tkinter.SUNKEN, width=10)
+            performance_frame, text="-", relief=tkinter.SUNKEN, width=10, bg="white")
         self.current_rms_3e1_1 = tkinter.Label(
-            performance_frame, text="-", relief=tkinter.SUNKEN, width=10)
+            performance_frame, text="-", relief=tkinter.SUNKEN, width=10, bg="white")
         self.current_rms_1_3 = tkinter.Label(
-            performance_frame, text="-", relief=tkinter.SUNKEN, width=10)
+            performance_frame, text="-", relief=tkinter.SUNKEN, width=10, bg="white")
 
         self.selected_label = tkinter.Label(performance_frame, text="Selected:")
         self.selected_rms = tkinter.Label(
-            performance_frame, text="-", relief=tkinter.SUNKEN, width=10)
+            performance_frame, text="-", relief=tkinter.SUNKEN, width=10, bg="white")
         self.selected_rms_3e2_1e1 = tkinter.Label(
-            performance_frame, text="-", relief=tkinter.SUNKEN, width=10)
+            performance_frame, text="-", relief=tkinter.SUNKEN, width=10, bg="white")
         self.selected_rms_1e1_3e1 = tkinter.Label(
-            performance_frame, text="-", relief=tkinter.SUNKEN, width=10)
+            performance_frame, text="-", relief=tkinter.SUNKEN, width=10, bg="white")
         self.selected_rms_3e1_1 = tkinter.Label(
-            performance_frame, text="-", relief=tkinter.SUNKEN, width=10)
+            performance_frame, text="-", relief=tkinter.SUNKEN, width=10, bg="white")
         self.selected_rms_1_3 = tkinter.Label(
-            performance_frame, text="-", relief=tkinter.SUNKEN, width=10)
+            performance_frame, text="-", relief=tkinter.SUNKEN, width=10, bg="white")
 
 
         self.choose_label.grid(row=0, column=0, sticky="w")
@@ -98,6 +99,12 @@ class Performance(tkinter.LabelFrame):
         for button in self.buttons:
             button.config(state="disabled")
 
+        self.overall_c = None
+        self.rms_3e2_1e1_c = None
+        self.rms_1e1_3e1_c = None
+        self.rms_3e1_1_c = None
+        self.rms_1_3_c = None
+
     def initialize(self):
         """Initialize"""
         for button in self.buttons:
@@ -120,21 +127,21 @@ class Performance(tkinter.LabelFrame):
         if selection == "velocity":
             displacement *= 2*np.pi*f
         evaluate = self.root.seibot.evaluate
-        overall = evaluate.get_rms(f, displacement) * 1e9
+        self.overall_c = evaluate.get_rms(f, displacement) * 1e9
         mask = (f>3e-2) * (f<1e-1)
-        rms_3e2_1e1 = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
+        self.rms_3e2_1e1_c = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
         mask = (f>1e-1) * (f<3e-1)
-        rms_1e1_3e1 = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
+        self.rms_1e1_3e1_c = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
         mask = (f>3e-1) * (f<1)
-        rms_3e1_1 = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
+        self.rms_3e1_1_c = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
         mask = (f>1) * (f<3)
-        rms_1_3 = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
+        self.rms_1_3_c = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
 
-        self.current_rms.config(text=f"{overall:.3g}")
-        self.current_rms_3e2_1e1.config(text=f"{rms_3e2_1e1:.3g}")
-        self.current_rms_1e1_3e1.config(text=f"{rms_1e1_3e1:.3g}")
-        self.current_rms_3e1_1.config(text=f"{rms_3e1_1:.3g}")
-        self.current_rms_1_3.config(text=f"{rms_1_3:.3g}")
+        self.current_rms.config(text=f"{self.overall_c:.3g}")
+        self.current_rms_3e2_1e1.config(text=f"{self.rms_3e2_1e1_c:.3g}")
+        self.current_rms_1e1_3e1.config(text=f"{self.rms_1e1_3e1_c:.3g}")
+        self.current_rms_3e1_1.config(text=f"{self.rms_3e1_1_c:.3g}")
+        self.current_rms_1_3.config(text=f"{self.rms_1_3_c:.3g}")
 
     def update_rms(self):
         """Update rms values"""
@@ -154,10 +161,40 @@ class Performance(tkinter.LabelFrame):
         mask = (f>1) * (f<3)
         rms_1_3 = evaluate.get_rms(f[mask], displacement[mask]) * 1e9
 
-        self.selected_rms.config(text=f"{overall:.3g}")
-        self.selected_rms_3e2_1e1.config(text=f"{rms_3e2_1e1:.3g}")
-        self.selected_rms_1e1_3e1.config(text=f"{rms_1e1_3e1:.3g}")
-        self.selected_rms_3e1_1.config(text=f"{rms_3e1_1:.3g}")
-        self.selected_rms_1_3.config(text=f"{rms_1_3:.3g}")
+        fg = "black"
+        if self.overall_c is not None:
+            if overall > self.overall_c:
+                fg = "red"
+            else:
+                fg = "green"
+        self.selected_rms.config(text=f"{overall:.3g}", fg=fg)
+
+        if self.rms_3e2_1e1_c is not None:
+            if rms_3e2_1e1 > self.rms_3e2_1e1_c:
+                fg = "red"
+            else:
+                fg = "green"
+        self.selected_rms_3e2_1e1.config(text=f"{rms_3e2_1e1:.3g}", fg=fg)
+
+        if self.rms_1e1_3e1_c is not None:
+            if rms_1e1_3e1 > self.rms_1e1_3e1_c:
+                fg = "red"
+            else:
+                fg = "green"
+        self.selected_rms_1e1_3e1.config(text=f"{rms_1e1_3e1:.3g}", fg=fg)
+
+        if self.rms_3e1_1_c is not None:
+            if rms_3e1_1 > self.rms_3e1_1_c:
+                fg = "red"
+            else:
+                fg = "green"
+        self.selected_rms_3e1_1.config(text=f"{rms_3e1_1:.3g}", fg=fg)
+
+        if self.rms_1_3_c is not None:
+            if rms_1_3 > self.rms_1_3_c:
+                fg = "red"
+            else:
+                fg = "green"
+        self.selected_rms_1_3.config(text=f"{rms_1_3:.3g}", fg=fg)
 
 
