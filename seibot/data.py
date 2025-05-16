@@ -796,7 +796,7 @@ class Data:
         asd = np.interp(np.log(self.f), np.log(f), np.log(asd))
         asd = 10**asd
 
-        return f, asd
+        return self.f, asd
 
     # def get_asd(self, channel, return_zero_frequency=False):
     #     """ Get an amplitude spectral density from a readout of a given channel
@@ -890,7 +890,7 @@ class Data:
         
         coh = np.interp(np.log(self.f), np.log(f), coh)
 
-        return f, coh
+        return self.f, coh
 
     # def get_coh(self, channel1, channel2, return_zero_frequency=False):
     #     """ Get coherence function from two readouts
