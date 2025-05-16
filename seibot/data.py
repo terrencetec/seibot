@@ -119,6 +119,10 @@ class Data:
             self.ts_witness_sensor = None
             print("CDS error")
 
+        # Welch
+        self.n_average = self.config.getint("Welch", "n_average")
+        self.overlap = self.config.getfloat("Welch", "overlap")
+
         # Initiallize dummy frequency axis:
         logspace = self.config.getboolean("Frequency", "logspace")
         start = self.config.getfloat("Frequency", "start")
