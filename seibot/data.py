@@ -633,7 +633,7 @@ class Data:
         inv_mask = mask == 0
         
         _, model = self.get_modeled("Inertial sensor")
-        inertial_asd = inertial_asd*mask + model*inv_mask
+        inertial_asd = inertial_asd*mask + abs(model(1j*2*np.pi*f))*inv_mask
         # v copied from Sushant's branch.
         # rounded_coh = np.round(coh, 2)
         # upper_limit = np.min(np.where(asd_ham8_gs13.frequencies.value == cutoff))
