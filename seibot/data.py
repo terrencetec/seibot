@@ -865,8 +865,6 @@ class Data:
         coh : array
             Coherence function
         """
-        nperseg = len(ts) / ((1+(1-self.overlap)*(self.n_average-1)))
-        noverlap = self.overlap * nperseg
 
         # resample
         if fs1 != fs2:
@@ -876,6 +874,9 @@ class Data:
             else:
                 q = int(fs1/fs2)
                 ts1 = self.resample(ts1, q)
+
+        nperseg = len(ts1) / ((1+(1-self.overlap)*(self.n_average-1)))
+        noverlap = self.overlap * nperseg
 
         f, coh = scipy.signal.coherence(
             x=ts1, y=ts2, fs=fs, nperseg=nperseg, noverlap=noverlap)
