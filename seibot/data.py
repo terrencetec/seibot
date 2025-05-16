@@ -871,15 +871,17 @@ class Data:
             if fs2 > fs1:
                 q = int(fs2/fs1)
                 ts2 = self.resample(ts2, q)
+                fs2 = fs1
             else:
                 q = int(fs1/fs2)
                 ts1 = self.resample(ts1, q)
+                fs1 = fs2
 
         nperseg = len(ts1) / ((1+(1-self.overlap)*(self.n_average-1)))
         noverlap = self.overlap * nperseg
 
         f, coh = scipy.signal.coherence(
-            x=ts1, y=ts2, fs=fs, nperseg=nperseg, noverlap=noverlap)
+            x=ts1, y=ts2, fs=fs1, nperseg=nperseg, noverlap=noverlap)
 
         # Filters out 0 Hz
         if not return_zero_frequency:
