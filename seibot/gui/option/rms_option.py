@@ -32,6 +32,7 @@ class RMSOption(tkinter.LabelFrame):
         band_frame = tkinter.LabelFrame(self, text="Select Band")
 
         self.band = tkinter.IntVar()
+        self.band.set(1)
         # self.optimize_0_3e_2 = tkinter.Radiobutton(
         #     band_frame, text="0 Hz - 0.03 Hz",
         #     command=self._optimize_0_3e_2,
