@@ -793,7 +793,7 @@ class Data:
 
         # Update 2025-05-16
         # Interpolate using new frequency axis.
-        asd = np.interp(np.log(self.f), np.log(f), np.log(asd))
+        asd = np.interp(np.log10(self.f), np.log10(f), np.log10(asd))
         asd = 10**asd
 
         return self.f, asd
