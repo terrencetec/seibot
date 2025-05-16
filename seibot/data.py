@@ -537,7 +537,8 @@ class Data:
         """
         f, seismic_asd = self.ts2asd(self.ts_seismometer, self.fs_seismometer)
         _, coh = self.ts2coh(
-            self.ts_seismometer, self.ts_seismometer_coh, self.fs_seismometer)
+            self.ts_seismometer, self.ts_seismometer_coh,
+            self.fs_seismometer, self.fs_seismometer_coh)
 
         # Calibrate spectrum to displacement unit.
         calibration = self.config["Calibration"]["seismometer"]
