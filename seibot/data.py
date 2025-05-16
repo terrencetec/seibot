@@ -71,8 +71,6 @@ class Data:
         if start is None:
             start = seibot.gps.get_gpstime_now() - duration
 
-        self.fs = None
-
         try:
         # Try in case not working with LIGO workstations.
             time_series = self.fetch(channel_list, duration, start)
@@ -84,26 +82,26 @@ class Data:
             ts_relative_sensor = time_series[3].data
             ts_witness_sensor = time_series[4].data
 
-            fs_seismometer = time_series[0].sample_rate
-            fs_seismometer_coh = time_series[1].sample_rate
-            fs_inertial_sensor = time_series[2].sample_rate
-            fs_relative_sensor = time_series[3].sample_rate
-            fs_witness_sensor = time_series[4].sample_rate
+            self.fs_seismometer = time_series[0].sample_rate
+            self.fs_seismometer_coh = time_series[1].sample_rate
+            self.fs_inertial_sensor = time_series[2].sample_rate
+            self.fs_relative_sensor = time_series[3].sample_rate
+            self.fs_witness_sensor = time_series[4].sample_rate
             
             # Resample
-            fs = fs_seismometer  # Adhere to seismometer readout.
-            if fs_seismometer_coh != fs:
-                q = int(fs_seismometer_coh / fs)
-                ts_seismometer_coh = self.resample(ts_seismometer_coh, q)
-            if fs_inertial_sensor != fs:
-                q = int(fs_inertial_sensor / fs)
-                ts_inertial_sensor = self.resample(ts_inertial_sensor, q)
-            if fs_relative_sensor != fs:
-                q = int(fs_relative_sensor / fs)
-                ts_relative_sensor = self.resample(ts_relative_sensor, q)
-            if fs_witness_sensor != fs:
-                q = int(fs_witness_sensor / fs)
-                ts_witness_sensor = self.resample(ts_witness_sensor, q)
+            # fs = fs_seismometer  # Adhere to seismometer readout.
+            # if fs_seismometer_coh != fs:
+            #     q = int(fs_seismometer_coh / fs)
+            #     ts_seismometer_coh = self.resample(ts_seismometer_coh, q)
+            # if fs_inertial_sensor != fs:
+            #     q = int(fs_inertial_sensor / fs)
+            #     ts_inertial_sensor = self.resample(ts_inertial_sensor, q)
+            # if fs_relative_sensor != fs:
+            #     q = int(fs_relative_sensor / fs)
+            #     ts_relative_sensor = self.resample(ts_relative_sensor, q)
+            # if fs_witness_sensor != fs:
+            #     q = int(fs_witness_sensor / fs)
+            #     ts_witness_sensor = self.resample(ts_witness_sensor, q)
 
             ## Convert to attribute and have getters access them
 
@@ -112,8 +110,6 @@ class Data:
             self.ts_inertial_sensor = ts_inertial_sensor
             self.ts_relative_sensor = ts_relative_sensor
             self.ts_witness_sensor = ts_witness_sensor
-
-            self.fs = fs
 
         except:
             self.ts_seismometer = None
@@ -124,25 +120,25 @@ class Data:
             print("CDS error")
 
         # Initiallize dummy frequency axis:
-        duration = self.config.getfloat("CDSutils", "duration")
-        nperseg = self.config.getint("Welch", "nperseg")
-        if self.fs is None:
-            self.fs = self.config.getfloat("Welch", "fs")
-        n_data = int(self.fs * duration)
-        data = np.random.normal(loc=0, scale=1, size=n_data)
-        f, _ = scipy.signal.welch(data, fs=self.fs, nperseg=nperseg)
-        f = f[1:]  # Remove DC
-        self.f = f
+        logspace = self.config.getboolean("Frequency", "logspace")
+        start = self.config.getfloat("Frequency", "start")
+        end = self.config.getfloat("Frequency", "end")
+        num = self.config.getint("Frequency", "num")
+        
+        if logspace:
+            self.f = np.logspace(start, end, num)
+        else:
+            self.f = np.linspace(start, end, num)
 
         # Make witness spectrum if not None
         if self.ts_witness_sensor is not None:
             _, self.witness_sensor = self.ts2asd(
-                self.ts_witness_sensor, self.fs, nperseg)
+                self.ts_witness_sensor, self.fs_witness_sensor)
             calibration = self.config["Calibration"]["witness_sensor"]
             inv_filter = seibot.filter.InverseFilters()
             cal_filter = getattr(inv_filter, calibration)
             self.witness_sensor = (self.witness_sensor
-                                   * abs(cal_filter(1j*2*np.pi*f))
+                                   * abs(cal_filter(1j*2*np.pi*self.f))
             )
             self.witness_sensor = self.witness_sensor * 1e-9  # From nm to m. TODO avoid hardcode.
         else:
@@ -150,7 +146,7 @@ class Data:
 
         # Initialize attributes
         # Use seismometer f array if exists.
-        self.f, self.seismic_noise = self.get_seismic_noise()
+        _, self.seismic_noise = self.get_seismic_noise()
         _, self.seismometer_noise = self.get_seismometer_noise()
         _, self.inertial_sensor_noise = self.get_inertial_sensor_noise()
         _, self.relative_sensor_noise = self.get_relative_sensor_noise()
@@ -535,11 +531,9 @@ class Data:
         seismic_asd : array
             Amplitude spectral density of the seismic noise.
         """
-        nperseg = self.config["Welch"].getint("nperseg")
-
-        f, seismic_asd = self.ts2asd(self.ts_seismometer, self.fs, nperseg)
+        f, seismic_asd = self.ts2asd(self.ts_seismometer, self.fs_seismometer)
         _, coh = self.ts2coh(
-            self.ts_seismometer, self.ts_seismometer_coh, self.fs, nperseg)
+            self.ts_seismometer, self.ts_seismometer_coh, self.fs_seismometer)
 
         # Calibrate spectrum to displacement unit.
         calibration = self.config["Calibration"]["seismometer"]
@@ -562,11 +556,10 @@ class Data:
         seismometer_asd : array
             Amplitude spectral density of the seismometer noise.
         """
-        nperseg = self.config["Welch"].getint("nperseg")
-
-        f, seismic_asd = self.ts2asd(self.ts_seismometer, self.fs, nperseg)
+        f, seismic_asd = self.ts2asd(self.ts_seismometer, self.fs_seismometer)
         _, coh = self.ts2coh(
-            self.ts_seismometer, self.ts_seismometer_coh, self.fs, nperseg)
+            self.ts_seismometer, self.ts_seismometer_coh,
+            self.fs_seismometer, self.fs_seismometer_coh)
 
         # Calibrate spectrum to displacement unit.
         calibration = self.config["Calibration"].get("seismometer")
@@ -599,16 +592,16 @@ class Data:
         inertial_asd : array
             Amplitude spectral density of the inertial sensor noise.
         """
-        nperseg = self.config["Welch"].getint("nperseg")
-
         f, inertial_asd = self.ts2asd(
-            self.ts_inertial_sensor, self.fs, nperseg)
+            self.ts_inertial_sensor, self.fs_inertial_sensor)
         _, coh = self.ts2coh(
-            self.ts_inertial_sensor, self.ts_seismometer_coh, self.fs, nperseg)
+            self.ts_inertial_sensor, self.ts_seismometer_coh,
+            self.fs_inertial_sensor, self.fs_seismometer_coh)
         
-        f, seismic_asd = self.ts2asd(self.ts_seismometer, self.fs, nperseg)
+        f, seismic_asd = self.ts2asd(self.ts_seismometer, self.fs_seismometer)
         _, sts_coh = self.ts2coh(
-            self.ts_seismometer, self.ts_seismometer_coh, self.fs, nperseg)
+            self.ts_seismometer, self.ts_seismometer_coh,
+            self.fs_seismometer, self.fs_seismometer_coh)
 
         # Calibrate seismic spectrum to displacement unit.
         calibration = self.config["Calibration"].get("seismometer")
@@ -756,7 +749,12 @@ class Data:
 
         return time_series
 
-    def ts2asd(self, ts, fs, nperseg=None, return_zero_frequency=False):
+    def get_nperseg(self, n_data, n_average, overlap):
+        """Get nperseg"""
+        nperseg = n_data / ((1-overlap) * (n_average-1))
+        return nperseg
+
+    def ts2asd(self, ts, fs, return_zero_frequency=False):
         """Time series to amplitude spectral density
         
         Parameters
@@ -765,9 +763,6 @@ class Data:
             Time series.
         fs : float
             Sampling frequency.
-        nperseg : int, optional
-            Length of each segment. Passed to ``scipy.signal.welch()''.
-            Defaults to taking 1024 seconds of data.
         return_zero_frequency : bool
             Return frequency spectrum at 0 Hz.
             Defaults `False`.
@@ -779,16 +774,22 @@ class Data:
         asd : array
             Amplitude spectral density.
         """
-        if nperseg is None:
-            nperseg = int(fs*1024)  # Defaults to 1024 seconds ~0.001 Hz
+        nperseg = len(ts) / ((1+(1-self.overlap)*(self.n_average-1)))
+        noverlap = self.overlap * nperseg
 
-        f, psd = scipy.signal.welch(ts, fs=fs, nperseg=nperseg)
+        f, psd = scipy.signal.welch(
+            ts, fs=fs, nperseg=nperseg, noverlap=noverlap)
 
         asd = psd**.5
 
         if not return_zero_frequency:
             asd = asd[f>0]
             f = f[f>0]
+
+        # Update 2025-05-16
+        # Interpolate using new frequency axis.
+        asd = np.interp(np.log(self.f), np.log(f), np.log(asd))
+        asd = 10**asd
 
         return f, asd
 
@@ -835,7 +836,7 @@ class Data:
 
     #     return f, asd
 
-    def ts2coh(self, ts1, ts2, fs, nperseg=None, return_zero_frequency=False):
+    def ts2coh(self, ts1, ts2, fs1, fs2, return_zero_frequency=False):
         """ Returns coherence function of two signals.
 
         Parameters
@@ -845,10 +846,9 @@ class Data:
         ts2 : array
             Time series 2
         fs : float
-            Sampling frequency.
-        nperseg : int, optional
-            Length of each segment. Passed to ``scipy.signal.welch()''.
-            Defaults to taking 1024 seconds of data.
+            Sampling frequency of ts1.
+        fs2 : float
+            Sampling frequency of ts2.
         return_zero_frequency : bool
             Return frequency spectrum at 0 Hz.
             Defaults `False`.
@@ -860,14 +860,27 @@ class Data:
         coh : array
             Coherence function
         """
-        nperseg = self.config["Welch"].getint("nperseg")
+        nperseg = len(ts) / ((1+(1-self.overlap)*(self.n_average-1)))
+        noverlap = self.overlap * nperseg
 
-        f, coh = scipy.signal.coherence(x=ts1, y=ts2, fs=fs, nperseg=nperseg)
+        # resample
+        if fs1 != fs2:
+            if fs2 > fs1:
+                q = int(fs2/fs1)
+                ts2 = self.resample(ts2, q)
+            else:
+                q = int(fs1/fs2)
+                ts1 = self.resample(ts1, q)
+
+        f, coh = scipy.signal.coherence(
+            x=ts1, y=ts2, fs=fs, nperseg=nperseg, noverlap=noverlap)
 
         # Filters out 0 Hz
         if not return_zero_frequency:
             coh = coh[f>0]
             f = f[f>0]
+        
+        coh = np.interp(np.log(self.f), np.log(f), coh)
 
         return f, coh
 
