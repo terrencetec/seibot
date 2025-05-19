@@ -67,7 +67,8 @@ class SelectionTabs(tkinter.ttk.Notebook):
     def enable(self):
         """Enable tabs"""
         self.enabled = True
-        self.plot()
+        # self.plot()
+        self.tab_changed(None)
     
     def disable(self):
         """Disable tab"""

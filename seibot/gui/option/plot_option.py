@@ -111,6 +111,21 @@ class PlotOption(tkinter.LabelFrame):
 
         self.enable()
         self.noise.initialize()
+        self.plot()
+
+    def plot(self):
+        """Replot all"""
+        self.noise.plot_all()
+        self.plot_all()
+        self.plot_witness()
+        self.plot_current()
+        self.plot_selected()
+        # selection = self.plot_selected_var.get()
+        # if selection == 1:
+        #     self.plot_selected_var.set(0)
+        #     self.plot_selected()
+        #     self.plot_selected_var.set(1)
+        #     self.plot_selected()
 
     def get_all_displacement(self):
         """Get all displacement data
@@ -226,44 +241,6 @@ class PlotOption(tkinter.LabelFrame):
             self.root.main_plot.update_all_lines("all")
             self.root.main_plot.update_bounds("all")
         
-    def plot_min_disp(self):
-        """Plot minimum displacement"""
-        if self.plot_min_disp_var.get():
-            self.root.main_plot.update_line("min_disp", self.f, self.min_disp)
-            sc = self.min_disp_filters.sc
-            lp = self.min_disp_filters.lp
-            hp = self.min_disp_filters.hp
-            self.root.sc_plot.update_line("min_disp", self.f, sc.mag)
-            self.root.sc_plot.update_line("min_disp_comp", self.f, sc.mag_comp)
-            self.root.blend_plot.update_line("min_disp", self.f, lp.mag)
-            self.root.blend_plot.update_line("min_disp_comp", self.f, hp.mag)
-        else:
-            self.root.main_plot.update_line("min_disp")
-            self.root.sc_plot.update_line("min_disp")
-            self.root.sc_plot.update_line("min_disp_comp")
-            self.root.blend_plot.update_line("min_disp")
-            self.root.blend_plot.update_line("min_disp_comp")
-
-    def plot_min_vel(self):
-        """Plot minimum velocity"""
-        if self.plot_min_vel_var.get():
-            self.root.main_plot.update_line(
-                "min_vel", self.f, self.min_vel
-            )
-            sc = self.min_vel_filters.sc
-            lp = self.min_vel_filters.lp
-            hp = self.min_vel_filters.hp
-            self.root.sc_plot.update_line("min_vel", self.f, sc.mag)
-            self.root.sc_plot.update_line("min_vel_comp", self.f, sc.mag_comp)
-            self.root.blend_plot.update_line("min_vel", self.f, lp.mag)
-            self.root.blend_plot.update_line("min_vel_comp", self.f, hp.mag)
-        else:
-            self.root.main_plot.update_line("min_vel")
-            self.root.sc_plot.update_line("min_vel")
-            self.root.sc_plot.update_line("min_vel_comp")
-            self.root.blend_plot.update_line("min_vel")
-            self.root.blend_plot.update_line("min_vel_comp")
-
     def plot_witness(self):
         """Plot witness"""
         if self.plot_witness_var.get() and self.witness is not None:

@@ -53,8 +53,10 @@ class OptionPanel(tkinter.LabelFrame):
 
     def enable(self):
         """Enable options"""
-        self.plot_option.initialize()
+        # Selection tabs needs to go first.
         self.selection_tabs.initialize()
+        self.plot_option.initialize()
+        # self.selection_tabs.initialize()
         self.export_option.initialize()
         self.performance.initialize()
         # self.manual_option.initialize()
