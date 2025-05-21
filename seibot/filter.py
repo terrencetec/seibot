@@ -338,17 +338,17 @@ class FilterConfiguration(dict):
         config["Sensor correction filter"] = {
             "filter_file": sc.filter_file,
             "module": sc.module,
-            "fm": sc.fm
+            "fm": str(sc.fm)[1:-1]
         }
         config["Low pass filter"] = {
             "filter_file": lp.filter_file,
             "module": lp.module,
-            "fm": lp.fm
+            "fm": str(lp.fm)[1:-1]
         }
         config["High pass filter"] = {
             "filter_file": hp.filter_file,
             "module": hp.module,
-            "fm": hp.fm
+            "fm": str(hp.fm)[1:-1]
         }
 
         with open(path, "w") as file:
