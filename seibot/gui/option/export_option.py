@@ -16,7 +16,8 @@ class ExportOption(tkinter.Frame):
             self, text="Export selected filters",
             command=self.export_clicked)
 
-        self.export_button.pack()
+        self.export_button.pack(expand=1, side="top", fill="both")
+        self.export_button.config(font=("Helvetica", 16))
         
         self.buttons = [self.export_button]
         for button in self.buttons:

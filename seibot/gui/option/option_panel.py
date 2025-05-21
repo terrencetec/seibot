@@ -42,9 +42,11 @@ class OptionPanel(tkinter.LabelFrame):
 
 
         self.plot_option.grid(row=0, column=0, sticky="ewns", pady=3)
-        self.selection_tabs.grid(row=1, column=0, sticky="ewns", pady=3)
-        self.export_option.grid(row=2, column=0, sticky="ewns", pady=3)
-        self.performance.grid(row=3, column=0, sticky="ewns", pady=3)
+        self.performance.grid(row=1, column=0, sticky="ewns", pady=3)
+        self.selection_tabs.grid(row=2, column=0, sticky="ewns", pady=3)
+        self.export_option.grid(row=3, column=0, sticky="ewns", pady=3)
+
+        self.rowconfigure(3, weight=1)
 
         # self.manual_option.grid(row=1, column=0, sticky="ewns", pady=3)
         # self.threshold_option.grid(row=2, column=0, sticky="ewns", pady=3)

@@ -190,7 +190,7 @@ class MainPlot(Plot):
             color = "k"
             zorder = 0
             try:
-                alpha = .1 * len(ydatas)/10
+                alpha = 1 / len(ydatas) * 2.5
             except:
                 pass
         elif line == "threshold":
