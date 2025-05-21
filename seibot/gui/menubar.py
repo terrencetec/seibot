@@ -33,7 +33,8 @@ class FileMenu(tkinter.Menu):
             title="Open Seibot config",
             filetypes=((".ini files", ".ini*"), ("All files", "*.*"))
         )
-        self.root.load_seibot(config)
+        if config != ():
+            self.root.load_seibot(config)
 
     def exit(self):
         """Exit"""

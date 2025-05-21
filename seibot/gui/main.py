@@ -24,6 +24,8 @@ class Root(tkinter.Tk):
         self.config(menu=menubar)
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
 
         self.main_plot = seibot.gui.plot.MainPlot(self)
         self.main_plot.grid(row=0, column=0, columnspan=2, sticky="ewns")

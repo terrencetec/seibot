@@ -35,7 +35,7 @@ class Plot(tkinter.Frame):
         # toolbar.winfo_children()[0].config(background="white")
         # toolbar.winfo_children()[-2].config(background="white")
         toolbar.update()
-        self.canvas.get_tk_widget().pack(expand=1)
+        self.canvas.get_tk_widget().pack(expand=1, side="top", fill="both")
 
 
 class MainPlot(Plot):
