@@ -600,22 +600,25 @@ class Data:
         f, inertial_asd = self.ts2asd(
             self.ts_inertial_sensor, self.fs_inertial_sensor)
         _, coh = self.ts2coh(
-            self.ts_inertial_sensor, self.ts_seismometer_coh,
-            self.fs_inertial_sensor, self.fs_seismometer_coh)
+            self.ts_inertial_sensor, self.ts_seismometer,
+            self.fs_inertial_sensor, self.fs_seismometer)
         
-        f, seismic_asd = self.ts2asd(self.ts_seismometer, self.fs_seismometer)
-        _, sts_coh = self.ts2coh(
-            self.ts_seismometer, self.ts_seismometer_coh,
-            self.fs_seismometer, self.fs_seismometer_coh)
+        # f, seismic_asd = self.ts2asd(self.ts_seismometer, self.fs_seismometer)
+        # _, sts_coh = self.ts2coh(
+        #     self.ts_seismometer, self.ts_seismometer_coh,
+        #     self.fs_seismometer, self.fs_seismometer_coh)
 
-        # Calibrate seismic spectrum to displacement unit.
-        calibration = self.config["Calibration"].get("seismometer")
-        inv_filter = seibot.filter.InverseFilters()
-        cal_filter = getattr(inv_filter, calibration)
-        seismic_asd = seismic_asd * abs(cal_filter(1j*2*np.pi*f))
-        seismic_asd = seismic_asd * 1e-9  # From nm to m. TODO avoid hardcode.
+        # # Calibrate seismic spectrum to displacement unit.
+        # calibration = self.config["Calibration"].get("seismometer")
+        # inv_filter = seibot.filter.InverseFilters()
+        # cal_filter = getattr(inv_filter, calibration)
+        # seismic_asd = seismic_asd * abs(cal_filter(1j*2*np.pi*f))
+        # seismic_asd = seismic_asd * 1e-9  # From nm to m. TODO avoid hardcode.
 
-        cutoff_i = self._get_seismometer_cutoff(seismic_asd, sts_coh)
+        # cutoff_i = self._get_seismometer_cutoff(seismic_asd, sts_coh)
+
+        # Coherent subtraction
+        inertial_asd = (inertial_asd**2 * (1-coh**.5))**.5
 
         # Calibrate inertial sensor
         calibration = self.config["Calibration"].get("inertial_sensor")
@@ -624,16 +627,17 @@ class Data:
         inertial_asd = inertial_asd * abs(cal_filter(1j*2*np.pi*f))
         inertial_asd = inertial_asd * 1e-9  # From nm to m.TODO avoid hardcode.
 
-        coh = np.round(coh, 2)
-        mask = (coh < 0.2) * (f < f[cutoff_i])
-        for i in range(len(mask)):
-            if np.sum(mask[i:]) == 0:
-                mask[:i] = 1
-                break
-        inv_mask = mask == 0
+        # coh = np.round(coh, 2)
+        # mask = (coh < 0.2) * (f < f[cutoff_i])
+        # for i in range(len(mask)):
+        #     if np.sum(mask[i:]) == 0:
+        #         mask[:i] = 1
+        #         break
+        # inv_mask = mask == 0
         
-        _, model = self.get_modeled("Inertial sensor")
-        inertial_asd = inertial_asd*mask + abs(model(1j*2*np.pi*f))*inv_mask
+        # _, model = self.get_modeled("Inertial sensor")
+        # inertial_asd = inertial_asd*mask + abs(model(1j*2*np.pi*f))*inv_mask
+
         # v copied from Sushant's branch.
         # rounded_coh = np.round(coh, 2)
         # upper_limit = np.min(np.where(asd_ham8_gs13.frequencies.value == cutoff))
