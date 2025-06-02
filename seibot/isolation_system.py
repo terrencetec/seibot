@@ -147,6 +147,7 @@ class IsolationSystem:
                              "or high_pass_filter is not set.")
         
         forecaster = seibot.forecast.Forecast()
+        forecaster.f = self.relative_sensor.f
         disturbance = forecaster.get_disturbance(
             seismic_noise=seismic_noise,
             transmissivity=self.transmissivity.mag

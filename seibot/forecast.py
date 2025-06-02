@@ -101,10 +101,16 @@ class Forecast:
             The estimated sensor correction noise
         """
         h_sc = sensor_correction_filter
-        h_trans = sensor_correction_comp
+        h_trans = sensor_correction_comp.copy()
         # filtered_seismometer = abs(h_sc(1j*2*np.pi*f)) * seismometer_noise
         # filtered_seismic = abs(h_trans(1j*2*np.pi*f)) * seismic_noise
         filtered_seismometer = h_sc * seismometer_noise
+
+        # Update 2025-06-02 Limit transmissivity
+        band = (self.f > 0.1) * (self.f < 0.5)
+        mask = h_trans < 0.1
+        h_trans[band*mask] = 0.1
+
         filtered_seismic = h_trans * seismic_noise
         noise = (filtered_seismometer**2 + filtered_seismic**2)**.5
         
