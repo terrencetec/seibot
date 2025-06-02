@@ -38,5 +38,5 @@ class ExportOption(tkinter.Frame):
         lp = self.master.selection_tabs.selected_lp
         hp = self.master.selection_tabs.selected_hp
         
-        filters = seibot.filter.FilterConfiguration(sc=sc, lp=lp, hp=lp)
+        filters = seibot.filter.FilterConfiguration(sc=sc, lp=lp, hp=hp)
         filters.export(path)
